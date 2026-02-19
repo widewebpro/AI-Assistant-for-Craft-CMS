@@ -51,17 +51,9 @@ class WidgetService extends Component
         }
 
         $configJson = json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT);
-        $widgetJsUrl = Craft::$app->getAssetManager()->getPublishedUrl(
-            '@craftcms/aiagent/web/assets/widget',
-            true,
-            'chat-widget.js'
-        );
-
-        if (!$widgetJsUrl) {
-            $basePath = dirname(__DIR__) . '/web/assets/widget';
-            $result = Craft::$app->getAssetManager()->publish($basePath);
-            $widgetJsUrl = $result[1] . '/chat-widget.js';
-        }
+        $basePath = dirname(__DIR__) . '/web/assets/widget';
+        $result = Craft::$app->getAssetManager()->publish($basePath);
+        $widgetJsUrl = $result[1] . '/chat-widget.js';
 
         return <<<HTML
 <script>
