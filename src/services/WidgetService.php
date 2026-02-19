@@ -39,6 +39,17 @@ class WidgetService extends Component
                 'stream' => rtrim($siteUrl, '/') . '/ai-agent/chat/stream',
             ],
             'pageRules' => $rules,
+            'escalation' => [
+                'enabled' => $settings->escalationEnabled,
+                'message' => $settings->escalationMessage,
+                'fields' => [
+                    'name' => $settings->escalationFieldName,
+                    'email' => $settings->escalationFieldEmail,
+                    'phone' => $settings->escalationFieldPhone,
+                ],
+                'customQuestions' => array_filter(array_map('trim', explode("\n", $settings->escalationCustomQuestions))),
+                'confirmation' => $settings->escalationConfirmation,
+            ],
         ];
     }
 

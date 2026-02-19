@@ -22,7 +22,11 @@ class ToolRegistry extends Component
         $this->register(new GetPageContextTool());
         $this->register(new GetBusinessInfoTool());
         $this->register(new ListKnowledgeTopicsTool());
-        $this->register(new EscalateTool());
+
+        $settings = \widewebpro\aiagent\Plugin::getInstance()?->getSettings();
+        if ($settings && $settings->escalationEnabled) {
+            $this->register(new EscalateTool());
+        }
     }
 
     public function register(BaseTool $tool): void

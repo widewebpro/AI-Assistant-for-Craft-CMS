@@ -26,9 +26,10 @@ class AiService extends Component
             'temperature' => 0.3,
         ]);
 
-        // If the AI returned text without tool calls, check for off-topic
+        // Handle classification responses
         if (empty($step1Response['tool_calls']) && $step1Response['text']) {
-            $text = strtolower($step1Response['text']);
+            $text = strtolower(trim($step1Response['text']));
+
             if (str_contains($text, '[off_topic]')) {
                 return [
                     'text' => $settings->fallbackMessage,
@@ -38,7 +39,24 @@ class AiService extends Component
                 ];
             }
 
-            // LLM didn't call tools but should have -- force a KB search as fallback
+            if (str_contains($text, '[greeting]')) {
+                // Skip tools, go straight to step 2 for a friendly response
+                $step2Messages = $this->_buildGreetingMessages($userMessage, $conversationHistory, $settings);
+                $step2Response = $provider->chat($step2Messages, [], [
+                    'temperature' => $settings->temperature,
+                ]);
+                return [
+                    'text' => $step2Response['text'] ?? 'Hello! How can I help you?',
+                    'tool_calls' => [],
+                    'tool_results' => [],
+                    'usage' => [
+                        'step1' => $step1Response['usage'] ?? [],
+                        'step2' => $step2Response['usage'] ?? [],
+                    ],
+                ];
+            }
+
+            // LLM didn't call tools but should have — force a KB search as fallback
             $step1Response['tool_calls'] = [[
                 'id' => 'fallback_kb_search',
                 'name' => 'search_knowledge_base',
@@ -92,14 +110,23 @@ class AiService extends Component
         ]);
 
         if (empty($step1Response['tool_calls']) && $step1Response['text']) {
-            $text = strtolower($step1Response['text']);
+            $text = strtolower(trim($step1Response['text']));
+
             if (str_contains($text, '[off_topic]')) {
                 yield ['type' => 'text_delta', 'data' => $settings->fallbackMessage];
                 yield ['type' => 'done', 'data' => ['tool_calls' => [], 'tool_results' => []]];
                 return;
             }
 
-            // LLM didn't call tools but should have -- force a KB search as fallback
+            if (str_contains($text, '[greeting]')) {
+                $greetingMessages = $this->_buildGreetingMessages($userMessage, $conversationHistory, $settings);
+                foreach ($provider->stream($greetingMessages) as $chunk) {
+                    yield $chunk;
+                }
+                return;
+            }
+
+            // LLM didn't call tools but should have — force a KB search as fallback
             $step1Response['tool_calls'] = [[
                 'id' => 'fallback_kb_search',
                 'name' => 'search_knowledge_base',
@@ -181,15 +208,60 @@ class AiService extends Component
         return $messages;
     }
 
+    private function _buildGreetingMessages(string $userMessage, array $history, object $settings): array
+    {
+        $systemPrompt = "You are {$settings->agentName}. {$settings->agentPersona}\n";
+        $systemPrompt .= "The user sent a greeting or casual message. Respond warmly and briefly, then offer to help.\n";
+        $systemPrompt .= "Keep your response short — 1-2 sentences max. Be friendly and natural.";
+
+        $messages = [['role' => 'system', 'content' => $systemPrompt]];
+
+        $recentHistory = array_slice($history, -6);
+        foreach ($recentHistory as $msg) {
+            $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
+        }
+
+        $messages[] = ['role' => 'user', 'content' => $userMessage];
+        return $messages;
+    }
+
     private function _buildStep1SystemPrompt(object $settings, string $pageUrl): string
     {
-        $prompt = "You are a tool-calling assistant. You do NOT answer questions directly.\n";
-        $prompt .= "Your ONLY job is to:\n";
-        $prompt .= "1. Check if the user's question is on-topic\n";
-        $prompt .= "2. Call the right tools to gather information. You MUST call at least one tool for every on-topic question.\n";
-        $prompt .= "3. NEVER generate an answer yourself. The answer will be generated in a later step using your tool results.\n\n";
+        $prompt = "You are a routing assistant for {$settings->agentName}. Your job is to classify the user's message and call the right tools.\n\n";
 
-        // Inject available KB files so the LLM knows what to search
+        $prompt .= "MESSAGE CLASSIFICATION — pick ONE:\n\n";
+
+        $prompt .= "A) GREETING or casual message (\"hello\", \"hi\", \"thanks\", \"how are you\", etc.)\n";
+        $prompt .= "   → Respond with exactly: [GREETING]\n";
+        $prompt .= "   Do NOT call any tools for greetings or pleasantries.\n\n";
+
+        $prompt .= "B) QUESTION or request that needs information\n";
+        $prompt .= "   → Call one or more tools to gather the information. Do NOT answer directly.\n\n";
+
+        $prompt .= "C) OFF-TOPIC or DISALLOWED topic\n";
+        $prompt .= "   → Respond with exactly: [OFF_TOPIC]\n\n";
+
+        if ($settings->escalationEnabled) {
+            $prompt .= "D) User wants to be connected to a human\n";
+            $prompt .= "   → Call the escalate tool.\n";
+
+            $sensitivity = $settings->escalationSensitivity ?? 'medium';
+            if ($sensitivity === 'low') {
+                $prompt .= "   STRICT: Only escalate when the user explicitly and firmly demands a human, person, agent, or representative.\n";
+                $prompt .= "   Phrases like \"I need help\", \"can you help\", \"this isn't working\" are NOT escalation requests — always try to help first.\n";
+                $prompt .= "   Even repeated frustration is not enough — the user must clearly say they want a human.\n\n";
+            } elseif ($sensitivity === 'high') {
+                $prompt .= "   SENSITIVE: Escalate when the user asks for a human OR seems frustrated, dissatisfied, or you've failed to answer their question after the conversation shows repeated attempts.\n";
+                $prompt .= "   Signs to escalate: repeated complaints, expressions of frustration (\"this is useless\", \"you're not helping\"), or saying \"I need help\" after you already tried.\n";
+                $prompt .= "   Still try to help first on the initial ask — don't escalate on the very first message.\n\n";
+            } else {
+                $prompt .= "   BALANCED: Escalate when the user clearly asks for human help (e.g. \"talk to someone\", \"connect me to support\", \"I want a real person\").\n";
+                $prompt .= "   \"I need help\" or \"can you help me\" is NOT a request for a human — try to help first.\n";
+                $prompt .= "   If you've tried to help and the user is still unsatisfied and asks again, then escalate.\n\n";
+            }
+        }
+
+        // Inject available KB files
         $kbFiles = \widewebpro\aiagent\records\KnowledgeFileRecord::find()
             ->where(['status' => 'ready'])
             ->all();
@@ -207,18 +279,16 @@ class AiService extends Component
         }
 
         if ($settings->disallowedTopics) {
-            $prompt .= "DISALLOWED TOPICS (refuse these):\n{$settings->disallowedTopics}\n\n";
+            $prompt .= "DISALLOWED TOPICS (refuse these — classify as OFF-TOPIC):\n{$settings->disallowedTopics}\n\n";
         }
 
-        $prompt .= "TOOL SELECTION RULES (follow in order):\n";
-        $prompt .= "1. If the question is off-topic or about a disallowed topic, respond with exactly: [OFF_TOPIC]\n";
-        $prompt .= "2. For ANY question that could be answered by uploaded documents, ALWAYS call search_knowledge_base first. This is your PRIMARY information source.\n";
-        $prompt .= "3. ALSO call get_business_info if the user asks about the company, contact info, hours, etc.\n";
-        $prompt .= "4. ALSO call get_page_context if the question relates to the page the user is currently viewing.\n";
-        $prompt .= "5. Call list_knowledge_topics if you are unsure what information is available.\n";
-        $prompt .= "6. Call escalate if the user requests human help or you cannot assist.\n";
-        $prompt .= "7. You CAN and SHOULD call multiple tools in a single response.\n";
-        $prompt .= "8. When in doubt, ALWAYS call search_knowledge_base. It is better to search and find nothing than to skip it.\n";
+        $prompt .= "TOOL SELECTION RULES (for category B messages):\n";
+        $prompt .= "1. For questions that could be answered by documents, call search_knowledge_base. This is your PRIMARY source.\n";
+        $prompt .= "2. Also call get_business_info if asking about the company, contact info, hours, etc.\n";
+        $prompt .= "3. Also call get_page_context if the question relates to the current page.\n";
+        $prompt .= "4. Call list_knowledge_topics if unsure what information is available.\n";
+        $prompt .= "5. You CAN call multiple tools in a single response.\n";
+        $prompt .= "6. When in doubt, call search_knowledge_base — better to search and find nothing than to skip it.\n";
 
         if ($pageUrl) {
             $prompt .= "\nThe user is currently on page: {$pageUrl}";

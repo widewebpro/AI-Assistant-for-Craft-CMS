@@ -1,0 +1,116 @@
+{% extends "ai-agent/settings/_layout" %}
+{% import "_includes/forms" as forms %}
+{% set title = "Settings — Escalation" %}
+{% set settingsTab = "escalation" %}
+
+{% block settingsContent %}
+<form method="post" accept-charset="UTF-8">
+    {{ csrfInput() }}
+    {{ actionInput('ai-agent/escalation/save') }}
+    {{ redirectInput('ai-agent/settings/escalation') }}
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Escalation</h2>
+        <p class="light">When the AI agent can't help or the user explicitly asks for a human, the conversation can be escalated for human review. A contact form will appear in the chat widget to collect the user's details.</p>
+
+        {{ forms.lightswitchField({
+            label: "Enable Escalation",
+            instructions: "Allow the AI agent to escalate conversations for human review.",
+            id: "escalationEnabled",
+            name: "escalationEnabled",
+            on: settings.escalationEnabled,
+        }) }}
+    </div>
+
+    <div id="escalation-settings" style="{{ not settings.escalationEnabled ? 'display:none' : '' }}">
+        <div class="pane" style="margin-bottom: 24px;">
+            <h2>Sensitivity</h2>
+            <p class="light">Controls how readily the agent agrees to escalate a conversation.</p>
+
+            {{ forms.selectField({
+                label: "Escalation Sensitivity",
+                instructions: "How easily should the agent hand off to a human?",
+                id: "escalationSensitivity",
+                name: "escalationSensitivity",
+                value: settings.escalationSensitivity,
+                options: [
+                    { label: "Low — Only when user explicitly demands a human (e.g. \"let me talk to a person\")", value: "low" },
+                    { label: "Medium — When user clearly asks for human help (default)", value: "medium" },
+                    { label: "High — Also when user seems frustrated or the agent fails to help after a few attempts", value: "high" },
+                ],
+            }) }}
+        </div>
+
+        <div class="pane" style="margin-bottom: 24px;">
+            <h2>Messages</h2>
+
+            {{ forms.textareaField({
+                label: "Escalation Message",
+                instructions: "Shown to the user when a conversation is escalated, before the contact form appears.",
+                id: "escalationMessage",
+                name: "escalationMessage",
+                value: settings.escalationMessage,
+                rows: 2,
+                class: "fullwidth",
+            }) }}
+
+            {{ forms.textareaField({
+                label: "Confirmation Message",
+                instructions: "Shown after the user submits the contact form.",
+                id: "escalationConfirmation",
+                name: "escalationConfirmation",
+                value: settings.escalationConfirmation,
+                rows: 2,
+                class: "fullwidth",
+            }) }}
+        </div>
+
+        <div class="pane" style="margin-bottom: 24px;">
+            <h2>Contact Form Fields</h2>
+            <p class="light">Choose which fields to show in the contact form when a conversation is escalated.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                    <input type="hidden" name="escalationFieldName" value="0">
+                    <input type="checkbox" name="escalationFieldName" value="1" {{ settings.escalationFieldName ? 'checked' : '' }} style="width: 18px; height: 18px;">
+                    <span><strong>Name</strong> — visitor's full name</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                    <input type="hidden" name="escalationFieldEmail" value="0">
+                    <input type="checkbox" name="escalationFieldEmail" value="1" {{ settings.escalationFieldEmail ? 'checked' : '' }} style="width: 18px; height: 18px;">
+                    <span><strong>Email</strong> — visitor's email address</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 14px;">
+                    <input type="hidden" name="escalationFieldPhone" value="0">
+                    <input type="checkbox" name="escalationFieldPhone" value="1" {{ settings.escalationFieldPhone ? 'checked' : '' }} style="width: 18px; height: 18px;">
+                    <span><strong>Phone</strong> — visitor's phone number</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="pane" style="margin-bottom: 24px;">
+            <h2>Custom Questions</h2>
+            <p class="light">Add additional fields to the escalation form for your specific business needs.</p>
+
+            {{ forms.textareaField({
+                label: "Custom Questions",
+                instructions: "One per line. Each line becomes a text input field in the contact form.",
+                id: "escalationCustomQuestions",
+                name: "escalationCustomQuestions",
+                value: settings.escalationCustomQuestions,
+                rows: 4,
+                class: "code fullwidth",
+                placeholder: "Order number\nPreferred contact time\nCompany name",
+            }) }}
+        </div>
+    </div>
+
+    <button type="submit" class="btn submit">Save Escalation Settings</button>
+</form>
+
+{% js %}
+document.getElementById('escalationEnabled').addEventListener('change', function() {
+    document.getElementById('escalation-settings').style.display = this.checked ? '' : 'none';
+});
+{% endjs %}
+{% endblock %}

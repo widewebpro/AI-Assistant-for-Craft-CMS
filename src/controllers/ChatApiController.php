@@ -11,7 +11,7 @@ use yii\web\TooManyRequestsHttpException;
 
 class ChatApiController extends Controller
 {
-    protected array|bool|int $allowAnonymous = ['send', 'stream', 'widget-config'];
+    protected array|bool|int $allowAnonymous = ['send', 'stream', 'widget-config', 'escalate'];
     public $enableCsrfValidation = false;
 
     /**
@@ -195,9 +195,11 @@ class ChatApiController extends Controller
 
             // Check for escalation
             foreach ($allToolCalls as $call) {
-                $name = $call['name'] ?? '';
+                $name = $call['tool'] ?? $call['name'] ?? '';
                 if ($name === 'escalate') {
-                    $plugin->chat->markEscalated($conversation->id, $call['arguments']['reason'] ?? '');
+                    $reason = $call['args']['reason'] ?? $call['arguments']['reason'] ?? '';
+                    $plugin->chat->markEscalated($conversation->id, $reason);
+                    $this->_sendSSE('escalation', ['reason' => $reason]);
                 }
             }
 
@@ -230,6 +232,47 @@ class ChatApiController extends Controller
         Craft::$app->getResponse()->getHeaders()->set('Access-Control-Allow-Origin', '*');
 
         return $this->asJson($config);
+    }
+
+    /**
+     * POST /ai-agent/escalate — Save escalation contact form data.
+     */
+    public function actionEscalate(): Response
+    {
+        $this->requirePostRequest();
+        $request = Craft::$app->getRequest();
+        $plugin = Plugin::getInstance();
+        $settings = $plugin->getSettings();
+
+        $sessionId = $request->getBodyParam('sessionId', '');
+        $contactData = $request->getBodyParam('contact', []);
+
+        if (empty($sessionId)) {
+            return $this->asJson(['error' => 'Session ID required.', 'status' => 'error']);
+        }
+
+        $conversation = \widewebpro\aiagent\records\ConversationRecord::find()
+            ->where(['sessionId' => $sessionId])
+            ->one();
+
+        if (!$conversation) {
+            return $this->asJson(['error' => 'Conversation not found.', 'status' => 'error']);
+        }
+
+        $metadata = $conversation->metadata ? json_decode($conversation->metadata, true) : [];
+        $metadata['contact'] = $contactData;
+        $conversation->metadata = json_encode($metadata);
+        $conversation->status = 'escalated';
+        $conversation->save(false);
+
+        $plugin->chat->addMessage($conversation->id, 'system', 'Escalation form submitted: ' . json_encode($contactData));
+
+        Craft::info("Escalation form submitted for conversation {$conversation->id}", 'ai-agent');
+
+        return $this->asJson([
+            'status' => 'ok',
+            'confirmation' => $settings->escalationConfirmation,
+        ]);
     }
 
     private function _sendSSE(string $event, array $data): void

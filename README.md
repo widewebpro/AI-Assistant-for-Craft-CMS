@@ -10,15 +10,17 @@ Supports **OpenAI** and **Anthropic** as AI providers, with a built-in knowledge
 
 - **Embeddable chat widget** — Auto-injected into your site's frontend. Shadow DOM isolated, zero dependencies, mobile responsive.
 - **Knowledge base (RAG)** — Upload PDF, DOCX, TXT, or Markdown files. The plugin chunks, embeds, and searches them semantically.
-- **Two-step AI pipeline** — Step 1: validation and tool selection. Step 2: context-aware answer generation based on tool results.
+- **Smart message classification** — Automatically detects greetings, questions, off-topic messages, and escalation requests. Greetings get a natural response; questions trigger tool-based retrieval; off-topic messages return a configurable fallback.
+- **Two-step AI pipeline** — Step 1: message classification and tool selection. Step 2: context-aware answer generation based on tool results.
 - **5 built-in tools** — Knowledge base search, page context extraction, business info retrieval, topic listing, human escalation.
+- **Configurable escalation** — When the agent can't help or the user asks for a human, a contact form appears in the chat. Configurable fields (name, email, phone), custom questions, sensitivity level, and confirmation messages.
 - **Streaming responses** — Real-time Server-Sent Events (SSE) streaming to the chat widget.
 - **Multi-provider** — OpenAI (GPT-4o, GPT-4o Mini, GPT-4 Turbo) and Anthropic (Claude 3.5 Sonnet, Claude 3.7 Sonnet, Claude 3 Haiku).
 - **Full admin control** — Every setting configurable from the Craft CMS control panel.
 - **Page targeting** — Show or hide the widget on specific pages using glob URL patterns.
 - **Topic restrictions** — Define allowed/disallowed topics with custom fallback messages.
-- **Conversation history** — Browse and review all conversations from the admin panel.
-- **Customizable appearance** — Colors, fonts, position, welcome message, custom CSS/JS injection.
+- **Conversation history** — Browse and review all conversations from the admin panel. Escalated conversations are flagged with contact details.
+- **Customizable appearance** — Colors, fonts, position, welcome message, custom CSS/JS injection with live preview.
 - **Rate limiting** — Per-minute message limits and max messages per conversation.
 
 ---
@@ -49,7 +51,7 @@ php craft plugin/install ai-agent
 
 After installation, the plugin appears in the control panel sidebar. Click it to access the **Dashboard**, **Conversations**, and **Settings**.
 
-All configuration is done under **Settings**, which contains five tabs:
+All configuration is done under **Settings**, which contains six tabs:
 
 ### General
 
@@ -103,13 +105,39 @@ Control the agent's behavior boundaries:
 - **Fallback messages** — Custom responses for off-topic and error scenarios
 - **Rate limiting** — Max messages per minute and per conversation
 
+### Escalation
+
+Configure how the agent hands off conversations to humans:
+
+| Setting | Description |
+|---|---|
+| Enable/Disable | Turn the escalation tool on or off entirely |
+| Sensitivity | **Low** — only when user explicitly demands a human. **Medium** (default) — when user clearly asks for help. **High** — also when user seems frustrated or agent fails repeatedly. |
+| Escalation Message | Shown to the user before the contact form appears |
+| Confirmation Message | Shown after the user submits the contact form |
+| Contact Form Fields | Toggle Name, Email, Phone fields |
+| Custom Questions | Add business-specific fields (one per line, e.g. "Order number", "Preferred contact time") |
+
+When escalation triggers, the chat widget displays an inline contact form. Submitted data is saved to the conversation metadata and visible in the admin panel.
+
 ---
 
 ## How It Works
 
+### Message Classification
+
+Every incoming message is classified into one of four categories:
+
+1. **Greeting** — "hello", "hi", "thanks" → friendly conversational response, no tools called
+2. **Question** — anything that needs information → tools are called to gather context
+3. **Off-topic** — restricted or disallowed subject → returns the configured fallback message
+4. **Escalation request** — user asks for a human → triggers the escalation flow (sensitivity-dependent)
+
 ### Two-Step AI Pipeline
 
-1. **Tool Selection** — The user's message is analyzed. The AI selects which tools to call (search knowledge base, get page context, etc.) without answering directly.
+For questions (category 2):
+
+1. **Tool Selection** — The AI decides which tools to call (search knowledge base, get page context, etc.) without answering directly.
 2. **Answer Generation** — Tool results are injected as context. The AI generates a grounded answer based on retrieved data.
 
 This prevents hallucination by ensuring the agent always retrieves information before responding.
@@ -122,7 +150,7 @@ This prevents hallucination by ensuring the agent always retrieves information b
 | `get_page_context` | Extracts content from the page the user is currently on |
 | `get_business_info` | Returns business information from settings |
 | `list_knowledge_topics` | Lists available knowledge base files |
-| `escalate` | Marks the conversation for human review |
+| `escalate` | Marks the conversation for human review and shows a contact form |
 
 ### Knowledge Base (RAG)
 
@@ -131,6 +159,16 @@ This prevents hallucination by ensuring the agent always retrieves information b
 3. Each chunk is embedded via OpenAI's embedding API
 4. At query time, the question is embedded and matched via cosine similarity
 5. If no embedding match, MySQL FULLTEXT search is used as fallback
+
+### Escalation Flow
+
+1. User asks to speak with a human (sensitivity determines threshold)
+2. AI calls the `escalate` tool
+3. Conversation status is set to `escalated` in the database
+4. Chat widget shows an inline contact form with configured fields
+5. User submits their details → saved to conversation metadata
+6. Confirmation message displayed
+7. Admin can view escalated conversations and contact details in the CP
 
 ### Chat Widget
 
@@ -144,9 +182,9 @@ This prevents hallucination by ensuring the agent always retrieves information b
 
 ## Admin Panel
 
-**Dashboard** — Quick stats: total conversations, messages, knowledge base files, and recent activity.
+**Dashboard** — Quick stats: total conversations, messages, escalated conversations, knowledge base files, and recent activity.
 
-**Conversations** — Full history of all user conversations. Click into any to read the complete thread.
+**Conversations** — Full history of all user conversations. Filter by status (active, escalated). Click into any conversation to read the complete thread and view escalation contact details.
 
 ---
 

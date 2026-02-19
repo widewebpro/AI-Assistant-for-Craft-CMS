@@ -102,6 +102,8 @@ class Plugin extends BasePlugin
                 $event->rules['ai-agent/settings/pages/save'] = 'ai-agent/pages/save';
                 $event->rules['ai-agent/settings/restrictions'] = 'ai-agent/restrictions/index';
                 $event->rules['ai-agent/settings/restrictions/save'] = 'ai-agent/restrictions/save';
+                $event->rules['ai-agent/settings/escalation'] = 'ai-agent/escalation/index';
+                $event->rules['ai-agent/settings/escalation/save'] = 'ai-agent/escalation/save';
             }
         );
     }
@@ -115,6 +117,7 @@ class Plugin extends BasePlugin
                 $event->rules['ai-agent/chat'] = 'ai-agent/chat-api/send';
                 $event->rules['ai-agent/chat/stream'] = 'ai-agent/chat-api/stream';
                 $event->rules['ai-agent/widget-config'] = 'ai-agent/chat-api/widget-config';
+                $event->rules['ai-agent/escalate'] = 'ai-agent/chat-api/escalate';
             }
         );
     }

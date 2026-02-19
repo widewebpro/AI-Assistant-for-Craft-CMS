@@ -38,6 +38,16 @@ class Settings extends Model
     public int $maxMessagesPerConversation = 50;
     public int $rateLimitPerMinute = 10;
 
+    // Escalation
+    public bool $escalationEnabled = true;
+    public string $escalationSensitivity = 'medium'; // low | medium | high
+    public string $escalationMessage = 'Let me connect you with a team member. Please share your contact details so we can follow up.';
+    public bool $escalationFieldName = true;
+    public bool $escalationFieldEmail = true;
+    public bool $escalationFieldPhone = false;
+    public string $escalationCustomQuestions = '';
+    public string $escalationConfirmation = 'Thank you! A team member will reach out to you shortly.';
+
     // Business Info (for get_business_info tool)
     public string $businessName = '';
     public string $businessDescription = '';
@@ -72,6 +82,7 @@ class Settings extends Model
     public function defineRules(): array
     {
         return [
+            [['escalationSensitivity'], 'in', 'range' => ['low', 'medium', 'high']],
             [['aiProvider'], 'in', 'range' => ['openai', 'anthropic']],
             [['widgetPosition'], 'in', 'range' => ['bottom-right', 'bottom-left']],
             [['maxTokens'], 'integer', 'min' => 100, 'max' => 8192],

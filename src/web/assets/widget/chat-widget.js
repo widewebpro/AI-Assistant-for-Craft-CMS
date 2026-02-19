@@ -240,6 +240,12 @@
       eventSource.close();
     });
 
+    eventSource.addEventListener('escalation', function (e) {
+      if (config.escalation && config.escalation.enabled) {
+        showEscalationForm();
+      }
+    });
+
     eventSource.addEventListener('done', function (e) {
       if (!bubbleEl && typingEl.parentNode) {
         messagesEl.removeChild(typingEl);
@@ -267,6 +273,83 @@
       isStreaming = false;
       eventSource.close();
     };
+  }
+
+  function showEscalationForm() {
+    var esc = config.escalation || {};
+    var fields = esc.fields || {};
+    var customQs = esc.customQuestions || [];
+
+    var formWrapper = document.createElement('div');
+    formWrapper.className = 'ai-msg ai-msg-assistant';
+
+    var formBubble = document.createElement('div');
+    formBubble.className = 'ai-bubble ai-escalation-form';
+
+    var html = '<div style="font-weight:600;margin-bottom:8px;">Contact Information</div>';
+
+    if (fields.name) {
+      html += '<div class="ai-esc-field"><label>Name</label><input type="text" name="name" placeholder="Your name" class="ai-esc-input"></div>';
+    }
+    if (fields.email) {
+      html += '<div class="ai-esc-field"><label>Email</label><input type="email" name="email" placeholder="your@email.com" class="ai-esc-input"></div>';
+    }
+    if (fields.phone) {
+      html += '<div class="ai-esc-field"><label>Phone</label><input type="tel" name="phone" placeholder="Phone number" class="ai-esc-input"></div>';
+    }
+
+    for (var q = 0; q < customQs.length; q++) {
+      var qLabel = customQs[q];
+      var qKey = 'custom_' + q;
+      html += '<div class="ai-esc-field"><label>' + escapeHtml(qLabel) + '</label><input type="text" name="' + qKey + '" placeholder="' + escapeHtml(qLabel) + '" class="ai-esc-input"></div>';
+    }
+
+    html += '<button type="button" class="ai-esc-submit">Submit</button>';
+    formBubble.innerHTML = html;
+    formWrapper.appendChild(formBubble);
+    messagesEl.appendChild(formWrapper);
+    scrollToBottom();
+
+    var submitBtn = formBubble.querySelector('.ai-esc-submit');
+    submitBtn.addEventListener('click', function () {
+      var inputs = formBubble.querySelectorAll('.ai-esc-input');
+      var contactData = {};
+      var hasRequired = true;
+
+      inputs.forEach(function (inp) {
+        var val = inp.value.trim();
+        contactData[inp.name] = val;
+        if (!val && (inp.name === 'name' || inp.name === 'email')) {
+          inp.style.borderColor = '#dc2626';
+          hasRequired = false;
+        } else {
+          inp.style.borderColor = '';
+        }
+      });
+
+      if (!hasRequired) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      var siteUrl = config.endpoints.stream.replace('/ai-agent/chat/stream', '');
+      fetch(siteUrl + '/ai-agent/escalate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ sessionId: sessionId, contact: contactData }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          formWrapper.remove();
+          var confirmation = (data && data.confirmation) || esc.confirmation || 'Thank you! We will be in touch.';
+          addBotMessage(confirmation, true);
+        })
+        .catch(function () {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit';
+          addBotMessage('Sorry, there was an error submitting the form. Please try again.');
+        });
+    });
   }
 
   function scrollToBottom() {
@@ -382,6 +465,14 @@
       '.ai-input::placeholder { color: #9ca3af; }' +
       '.ai-send { width: 38px; height: 38px; border-radius: 50%; border: none; background: ' + primary + '; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }' +
       '.ai-send:hover { opacity: 0.9; }' +
+      '.ai-escalation-form { width: 100%; max-width: 100%; }' +
+      '.ai-esc-field { margin-bottom: 8px; }' +
+      '.ai-esc-field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 2px; color: ' + text + '; }' +
+      '.ai-esc-input { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box; background: ' + bg + '; color: ' + text + '; }' +
+      '.ai-esc-input:focus { border-color: ' + primary + '; box-shadow: 0 0 0 2px ' + primary + '33; }' +
+      '.ai-esc-submit { width: 100%; padding: 10px; border: none; border-radius: 8px; background: ' + primary + '; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; font-family: inherit; }' +
+      '.ai-esc-submit:hover { opacity: 0.9; }' +
+      '.ai-esc-submit:disabled { opacity: 0.6; cursor: not-allowed; }' +
       '@media (max-width: 480px) { .ai-panel { width: calc(100vw - 20px); height: calc(100vh - 80px); border-radius: 16px 16px 0 0; bottom: 0; right: 0; left: 0; } .ai-widget { right: 10px; left: 10px; bottom: 10px; } }';
   }
 
