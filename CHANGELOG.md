@@ -2,7 +2,7 @@
 
 All notable changes to AI Assistant for Craft CMS will be documented in this file.
 
-## [Unreleased]
+## [0.1.1] - 2026-02-19
 
 ### Added
 - **Escalation system** — Configurable human handoff with inline contact form in the chat widget.
