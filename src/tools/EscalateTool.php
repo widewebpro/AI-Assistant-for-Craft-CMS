@@ -1,9 +1,9 @@
 <?php
 
-namespace craftcms\aiagent\tools;
+namespace widewebpro\aiagent\tools;
 
 use Craft;
-use craftcms\aiagent\records\ConversationRecord;
+use widewebpro\aiagent\records\ConversationRecord;
 
 class EscalateTool extends BaseTool
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace craftcms\aiagent\migrations;
+namespace widewebpro\aiagent\migrations;
 
 use craft\db\Migration;
 

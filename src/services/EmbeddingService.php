@@ -1,11 +1,11 @@
 <?php
 
-namespace craftcms\aiagent\services;
+namespace widewebpro\aiagent\services;
 
 use Craft;
 use craft\base\Component;
-use craftcms\aiagent\Plugin;
-use craftcms\aiagent\records\KnowledgeChunkRecord;
+use widewebpro\aiagent\Plugin;
+use widewebpro\aiagent\records\KnowledgeChunkRecord;
 
 class EmbeddingService extends Component
 {

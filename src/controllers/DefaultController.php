@@ -1,12 +1,12 @@
 <?php
 
-namespace craftcms\aiagent\controllers;
+namespace widewebpro\aiagent\controllers;
 
 use Craft;
 use craft\web\Controller;
-use craftcms\aiagent\Plugin;
-use craftcms\aiagent\records\ConversationRecord;
-use craftcms\aiagent\records\MessageRecord;
+use widewebpro\aiagent\Plugin;
+use widewebpro\aiagent\records\ConversationRecord;
+use widewebpro\aiagent\records\MessageRecord;
 use yii\web\Response;
 
 class DefaultController extends Controller

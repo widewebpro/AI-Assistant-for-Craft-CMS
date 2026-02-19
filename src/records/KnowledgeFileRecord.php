@@ -1,6 +1,6 @@
 <?php
 
-namespace craftcms\aiagent\records;
+namespace widewebpro\aiagent\records;
 
 use craft\db\ActiveRecord;
 

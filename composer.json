@@ -1,5 +1,5 @@
 {
-    "name": "craftcms/ai-agent",
+    "name": "widewebpro/ai-agent",
     "description": "AI-powered chat agent plugin for Craft CMS with knowledge base, tool calling, and customizable widget",
     "type": "craft-plugin",
     "license": "MIT",
@@ -14,7 +14,7 @@
     },
     "autoload": {
         "psr-4": {
-            "craftcms\\aiagent\\": "src/"
+            "widewebpro\\aiagent\\": "src/"
         }
     },
     "extra": {
@@ -23,7 +23,7 @@
         "developer": "Wideweb",
         "developerUrl": "https://wideweb.pro",
         "description": "AI-powered chat agent with knowledge base and customizable widget",
-        "class": "craftcms\\aiagent\\Plugin",
+        "class": "widewebpro\\aiagent\\Plugin",
         "hasCpSettings": false,
         "hasCpSection": true
     }

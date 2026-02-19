@@ -1,6 +1,6 @@
 <?php
 
-namespace craftcms\aiagent;
+namespace widewebpro\aiagent;
 
 use Craft;
 use craft\base\Plugin as BasePlugin;
@@ -10,14 +10,14 @@ use craft\events\RegisterTemplateRootsEvent;
 use craft\web\UrlManager;
 use craft\web\View;
 use craft\web\twig\variables\CraftVariable;
-use craftcms\aiagent\models\Settings;
-use craftcms\aiagent\services\AiService;
-use craftcms\aiagent\services\ChatService;
-use craftcms\aiagent\services\EmbeddingService;
-use craftcms\aiagent\services\KnowledgeBaseService;
-use craftcms\aiagent\services\ProviderService;
-use craftcms\aiagent\services\ToolRegistry;
-use craftcms\aiagent\services\WidgetService;
+use widewebpro\aiagent\models\Settings;
+use widewebpro\aiagent\services\AiService;
+use widewebpro\aiagent\services\ChatService;
+use widewebpro\aiagent\services\EmbeddingService;
+use widewebpro\aiagent\services\KnowledgeBaseService;
+use widewebpro\aiagent\services\ProviderService;
+use widewebpro\aiagent\services\ToolRegistry;
+use widewebpro\aiagent\services\WidgetService;
 use yii\base\Event;
 
 /**

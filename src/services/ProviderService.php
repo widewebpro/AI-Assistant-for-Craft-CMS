@@ -1,10 +1,10 @@
 <?php
 
-namespace craftcms\aiagent\services;
+namespace widewebpro\aiagent\services;
 
 use Craft;
 use craft\base\Component;
-use craftcms\aiagent\Plugin;
+use widewebpro\aiagent\Plugin;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace craftcms\aiagent\services;
+namespace widewebpro\aiagent\services;
 
 use Craft;
 use craft\base\Component;
-use craftcms\aiagent\Plugin;
+use widewebpro\aiagent\Plugin;
 
 class AiService extends Component
 {
@@ -190,7 +190,7 @@ class AiService extends Component
         $prompt .= "3. NEVER generate an answer yourself. The answer will be generated in a later step using your tool results.\n\n";
 
         // Inject available KB files so the LLM knows what to search
-        $kbFiles = \craftcms\aiagent\records\KnowledgeFileRecord::find()
+        $kbFiles = \widewebpro\aiagent\records\KnowledgeFileRecord::find()
             ->where(['status' => 'ready'])
             ->all();
 

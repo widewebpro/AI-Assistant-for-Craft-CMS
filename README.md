@@ -34,7 +34,7 @@ Supports **OpenAI** and **Anthropic** as AI providers, with a built-in knowledge
 ## Installation
 
 ```bash
-composer require craftcms/ai-agent
+composer require widewebpro/ai-agent
 ```
 
 Then install from the Craft control panel under **Settings → Plugins**, or run:

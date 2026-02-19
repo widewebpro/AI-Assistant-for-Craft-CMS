@@ -1,13 +1,13 @@
 <?php
 
-namespace craftcms\aiagent\services;
+namespace widewebpro\aiagent\services;
 
 use Craft;
 use craft\base\Component;
 use craft\helpers\StringHelper;
-use craftcms\aiagent\Plugin;
-use craftcms\aiagent\records\KnowledgeFileRecord;
-use craftcms\aiagent\records\KnowledgeChunkRecord;
+use widewebpro\aiagent\Plugin;
+use widewebpro\aiagent\records\KnowledgeFileRecord;
+use widewebpro\aiagent\records\KnowledgeChunkRecord;
 
 class KnowledgeBaseService extends Component
 {

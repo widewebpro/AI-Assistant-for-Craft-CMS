@@ -1,6 +1,6 @@
 <?php
 
-namespace craftcms\aiagent\models;
+namespace widewebpro\aiagent\models;
 
 use craft\base\Model;
 

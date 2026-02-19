@@ -1,6 +1,6 @@
 <?php
 
-namespace craftcms\aiagent\tools;
+namespace widewebpro\aiagent\tools;
 
 use Craft;
 use GuzzleHttp\Client;

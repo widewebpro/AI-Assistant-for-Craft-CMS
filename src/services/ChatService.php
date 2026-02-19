@@ -1,13 +1,13 @@
 <?php
 
-namespace craftcms\aiagent\services;
+namespace widewebpro\aiagent\services;
 
 use Craft;
 use craft\base\Component;
 use craft\helpers\StringHelper;
-use craftcms\aiagent\Plugin;
-use craftcms\aiagent\records\ConversationRecord;
-use craftcms\aiagent\records\MessageRecord;
+use widewebpro\aiagent\Plugin;
+use widewebpro\aiagent\records\ConversationRecord;
+use widewebpro\aiagent\records\MessageRecord;
 
 class ChatService extends Component
 {

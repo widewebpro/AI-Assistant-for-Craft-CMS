@@ -1,14 +1,14 @@
 <?php
 
-namespace craftcms\aiagent\services;
+namespace widewebpro\aiagent\services;
 
 use craft\base\Component;
-use craftcms\aiagent\tools\BaseTool;
-use craftcms\aiagent\tools\SearchKnowledgeBaseTool;
-use craftcms\aiagent\tools\GetPageContextTool;
-use craftcms\aiagent\tools\GetBusinessInfoTool;
-use craftcms\aiagent\tools\ListKnowledgeTopicsTool;
-use craftcms\aiagent\tools\EscalateTool;
+use widewebpro\aiagent\tools\BaseTool;
+use widewebpro\aiagent\tools\SearchKnowledgeBaseTool;
+use widewebpro\aiagent\tools\GetPageContextTool;
+use widewebpro\aiagent\tools\GetBusinessInfoTool;
+use widewebpro\aiagent\tools\ListKnowledgeTopicsTool;
+use widewebpro\aiagent\tools\EscalateTool;
 
 class ToolRegistry extends Component
 {

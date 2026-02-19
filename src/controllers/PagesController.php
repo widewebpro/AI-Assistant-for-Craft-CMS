@@ -1,11 +1,11 @@
 <?php
 
-namespace craftcms\aiagent\controllers;
+namespace widewebpro\aiagent\controllers;
 
 use Craft;
 use craft\web\Controller;
-use craftcms\aiagent\Plugin;
-use craftcms\aiagent\records\ConversationRecord;
+use widewebpro\aiagent\Plugin;
+use widewebpro\aiagent\records\ConversationRecord;
 use yii\db\Expression;
 use yii\web\Response;
 

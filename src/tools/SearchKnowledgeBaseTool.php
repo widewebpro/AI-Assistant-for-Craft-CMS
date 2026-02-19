@@ -1,8 +1,8 @@
 <?php
 
-namespace craftcms\aiagent\tools;
+namespace widewebpro\aiagent\tools;
 
-use craftcms\aiagent\Plugin;
+use widewebpro\aiagent\Plugin;
 
 class SearchKnowledgeBaseTool extends BaseTool
 {

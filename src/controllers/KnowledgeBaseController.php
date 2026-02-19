@@ -1,10 +1,10 @@
 <?php
 
-namespace craftcms\aiagent\controllers;
+namespace widewebpro\aiagent\controllers;
 
 use Craft;
 use craft\web\Controller;
-use craftcms\aiagent\Plugin;
+use widewebpro\aiagent\Plugin;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
