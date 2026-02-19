@@ -1,0 +1,68 @@
+{% extends "_layouts/cp" %}
+{% set title = "Conversation #" ~ conversation.id %}
+{% set selectedSubnavItem = "conversations" %}
+
+{% block content %}
+<div style="margin-bottom: 16px;">
+    <a href="{{ cpUrl('ai-agent/conversations') }}" class="btn">&larr; Back to Conversations</a>
+</div>
+
+<div class="pane" style="margin-bottom: 24px;">
+    <h2>Details</h2>
+    <table class="data">
+        <tr><th>Session ID</th><td><code>{{ conversation.sessionId }}</code></td></tr>
+        <tr><th>Page URL</th><td>{{ conversation.pageUrl ?? '—' }}</td></tr>
+        <tr><th>IP Address</th><td>{{ conversation.ipAddress ?? '—' }}</td></tr>
+        <tr>
+            <th>Status</th>
+            <td>
+                <span class="status {{ conversation.status == 'active' ? 'live' : (conversation.status == 'escalated' ? 'expired' : '') }}"></span>
+                {{ conversation.status | capitalize }}
+            </td>
+        </tr>
+        <tr><th>Started</th><td>{{ conversation.dateCreated }}</td></tr>
+    </table>
+</div>
+
+<div class="pane">
+    <h2>Messages ({{ messages | length }})</h2>
+
+    {% if messages | length %}
+    <div style="max-height: 600px; overflow-y: auto; padding: 16px 0;">
+        {% for msg in messages %}
+        <div style="
+            margin-bottom: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 85%;
+            {{ msg.role == 'user' ? 'margin-left: auto; background: #dbeafe; text-align: right;' : '' }}
+            {{ msg.role == 'assistant' ? 'background: #f3f4f6;' : '' }}
+            {{ msg.role == 'system' ? 'background: #fef3c7; font-style: italic;' : '' }}
+            {{ msg.role == 'tool' ? 'background: #f0fdf4; font-family: monospace; font-size: 13px;' : '' }}
+        ">
+            <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; font-weight: 600;">
+                {{ msg.role }}
+                <span style="font-weight: 400;">{{ msg.dateCreated }}</span>
+                {% if msg.tokensUsed %}<span> &middot; {{ msg.tokensUsed }} tokens</span>{% endif %}
+            </div>
+            <div>{{ msg.content ?? '(no content)' }}</div>
+            {% if msg.toolCalls %}
+                <details style="margin-top: 8px;">
+                    <summary style="cursor: pointer; font-size: 12px; color: #6b7280;">Tool Calls</summary>
+                    <pre style="font-size: 12px; margin-top: 4px; white-space: pre-wrap;">{{ msg.toolCalls | json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                </details>
+            {% endif %}
+            {% if msg.toolResults %}
+                <details style="margin-top: 8px;">
+                    <summary style="cursor: pointer; font-size: 12px; color: #6b7280;">Tool Results</summary>
+                    <pre style="font-size: 12px; margin-top: 4px; white-space: pre-wrap;">{{ msg.toolResults | json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                </details>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="light">No messages in this conversation.</p>
+    {% endif %}
+</div>
+{% endblock %}

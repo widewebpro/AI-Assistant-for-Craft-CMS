@@ -1,0 +1,30 @@
+{
+    "name": "craftcms/ai-agent",
+    "description": "AI-powered chat agent plugin for Craft CMS with knowledge base, tool calling, and customizable widget",
+    "type": "craft-plugin",
+    "license": "MIT",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.2",
+        "craftcms/cms": "^5.0",
+        "guzzlehttp/guzzle": "^7.0",
+        "smalot/pdfparser": "^2.0",
+        "phpoffice/phpword": "^1.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "craftcms\\aiagent\\": "src/"
+        }
+    },
+    "extra": {
+        "handle": "ai-agent",
+        "name": "AI Assistant for Craft CMS",
+        "developer": "Wideweb",
+        "developerUrl": "https://wideweb.pro",
+        "description": "AI-powered chat agent with knowledge base and customizable widget",
+        "class": "craftcms\\aiagent\\Plugin",
+        "hasCpSettings": false,
+        "hasCpSection": true
+    }
+}

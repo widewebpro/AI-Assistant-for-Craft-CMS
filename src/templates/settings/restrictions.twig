@@ -1,0 +1,93 @@
+{% extends "ai-agent/settings/_layout" %}
+{% import "_includes/forms" as forms %}
+{% set title = "Settings — Restrictions" %}
+{% set settingsTab = "restrictions" %}
+
+{% block settingsContent %}
+<form method="post" accept-charset="UTF-8">
+    {{ csrfInput() }}
+    {{ actionInput('ai-agent/restrictions/save') }}
+    {{ redirectInput('ai-agent/settings/restrictions') }}
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Topic Restrictions</h2>
+        <p class="light">Control what topics the AI agent can and cannot discuss.</p>
+
+        {{ forms.textareaField({
+            label: "Allowed Topics",
+            instructions: "One topic per line. If set, the agent will only discuss these topics. Leave empty to allow all topics.",
+            id: "allowedTopics",
+            name: "allowedTopics",
+            value: settings.allowedTopics,
+            rows: 5,
+            class: "code fullwidth",
+            placeholder: "Product information\nPricing\nSupport questions",
+        }) }}
+
+        {{ forms.textareaField({
+            label: "Disallowed Topics",
+            instructions: "One topic per line. The agent will refuse to discuss these topics.",
+            id: "disallowedTopics",
+            name: "disallowedTopics",
+            value: settings.disallowedTopics,
+            rows: 5,
+            class: "code fullwidth",
+            placeholder: "Competitors\nPolitics\nPersonal opinions",
+        }) }}
+    </div>
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Fallback Messages</h2>
+
+        {{ forms.textareaField({
+            label: "Off-Topic Fallback",
+            instructions: "Shown when a user asks about a restricted or off-topic subject.",
+            id: "fallbackMessage",
+            name: "fallbackMessage",
+            value: settings.fallbackMessage,
+            rows: 3,
+            class: "fullwidth",
+        }) }}
+
+        {{ forms.textareaField({
+            label: "Error Fallback",
+            instructions: "Shown when something goes wrong (API errors, timeouts, etc.).",
+            id: "errorMessage",
+            name: "errorMessage",
+            value: settings.errorMessage,
+            rows: 3,
+            class: "fullwidth",
+        }) }}
+    </div>
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Rate Limiting</h2>
+
+        {{ forms.textField({
+            label: "Max Messages Per Conversation",
+            instructions: "After this many messages, the conversation will be closed.",
+            id: "maxMessagesPerConversation",
+            name: "maxMessagesPerConversation",
+            value: settings.maxMessagesPerConversation,
+            type: "number",
+            min: 1,
+            max: 200,
+            size: 10,
+        }) }}
+
+        {{ forms.textField({
+            label: "Rate Limit (messages per minute)",
+            instructions: "Maximum messages a single user can send per minute.",
+            id: "rateLimitPerMinute",
+            name: "rateLimitPerMinute",
+            value: settings.rateLimitPerMinute,
+            type: "number",
+            min: 1,
+            max: 60,
+            size: 10,
+        }) }}
+    </div>
+
+    <button type="submit" class="btn submit">Save Restrictions</button>
+</form>
+{% endblock %}

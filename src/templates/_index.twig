@@ -1,0 +1,59 @@
+{% extends "_layouts/cp" %}
+{% set title = "AI Agent Dashboard" %}
+{% set selectedSubnavItem = "dashboard" %}
+
+{% block content %}
+<div class="ai-agent-dashboard">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+        <div class="pane">
+            <h3 class="light" style="margin-bottom: 4px;">Total Conversations</h3>
+            <p style="font-size: 2em; font-weight: 600; margin: 0;">{{ totalConversations }}</p>
+        </div>
+        <div class="pane">
+            <h3 class="light" style="margin-bottom: 4px;">Active</h3>
+            <p style="font-size: 2em; font-weight: 600; margin: 0; color: #16a34a;">{{ activeConversations }}</p>
+        </div>
+        <div class="pane">
+            <h3 class="light" style="margin-bottom: 4px;">Escalated</h3>
+            <p style="font-size: 2em; font-weight: 600; margin: 0; color: #dc2626;">{{ escalatedConversations }}</p>
+        </div>
+        <div class="pane">
+            <h3 class="light" style="margin-bottom: 4px;">Total Messages</h3>
+            <p style="font-size: 2em; font-weight: 600; margin: 0;">{{ totalMessages }}</p>
+        </div>
+    </div>
+
+    <div class="pane">
+        <h2>Recent Conversations</h2>
+        {% if recentConversations | length %}
+        <table class="data fullwidth">
+            <thead>
+                <tr>
+                    <th>Session ID</th>
+                    <th>Page</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conversation in recentConversations %}
+                <tr>
+                    <td><code>{{ conversation.sessionId[:8] }}...</code></td>
+                    <td>{{ conversation.pageUrl ?? '—' }}</td>
+                    <td>
+                        <span class="status {{ conversation.status == 'active' ? 'live' : (conversation.status == 'escalated' ? 'expired' : '') }}"></span>
+                        {{ conversation.status | capitalize }}
+                    </td>
+                    <td>{{ conversation.dateCreated }}</td>
+                    <td><a href="{{ cpUrl('ai-agent/conversations/' ~ conversation.id) }}">View</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="light">No conversations yet. Enable the widget in <a href="{{ cpUrl('ai-agent/settings') }}">Settings</a> to get started.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

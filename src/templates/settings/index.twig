@@ -1,0 +1,184 @@
+{% extends "ai-agent/settings/_layout" %}
+{% import "_includes/forms" as forms %}
+{% set title = "Settings — General" %}
+{% set settingsTab = "general" %}
+
+{% block settingsContent %}
+<form method="post" accept-charset="UTF-8">
+    {{ csrfInput() }}
+    {{ actionInput('ai-agent/settings/save') }}
+    {{ redirectInput('ai-agent/settings') }}
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>General</h2>
+
+        {{ forms.lightswitchField({
+            label: "Enable Widget",
+            instructions: "Toggle the chat widget on your site.",
+            id: "enabled",
+            name: "enabled",
+            on: settings.enabled,
+        }) }}
+
+        {{ forms.selectField({
+            label: "AI Provider",
+            instructions: "Select your AI provider.",
+            id: "aiProvider",
+            name: "aiProvider",
+            value: settings.aiProvider,
+            options: [
+                { label: "OpenAI", value: "openai" },
+                { label: "Anthropic", value: "anthropic" },
+            ],
+        }) }}
+
+        {{ forms.passwordField({
+            label: "API Key",
+            instructions: "Your AI provider API key. Stored encrypted.",
+            id: "apiKey",
+            name: "apiKey",
+            value: settings.apiKey,
+            class: "fullwidth",
+        }) }}
+
+        <div id="openai-models" style="{{ settings.aiProvider != 'openai' ? 'display:none' : '' }}">
+            {{ forms.selectField({
+                label: "OpenAI Model",
+                id: "openaiModel",
+                name: "openaiModel",
+                value: settings.openaiModel,
+                options: [
+                    { label: "GPT-4o", value: "gpt-4o" },
+                    { label: "GPT-4o Mini", value: "gpt-4o-mini" },
+                    { label: "GPT-4 Turbo", value: "gpt-4-turbo" },
+                ],
+            }) }}
+        </div>
+
+        <div id="anthropic-models" style="{{ settings.aiProvider != 'anthropic' ? 'display:none' : '' }}">
+            {{ forms.selectField({
+                label: "Anthropic Model",
+                id: "anthropicModel",
+                name: "anthropicModel",
+                value: settings.anthropicModel,
+                options: [
+                    { label: "Claude 3.5 Sonnet", value: "claude-3-5-sonnet-latest" },
+                    { label: "Claude 3.7 Sonnet", value: "claude-3-7-sonnet-latest" },
+                    { label: "Claude 3 Haiku", value: "claude-3-haiku-20240307" },
+                ],
+            }) }}
+        </div>
+
+        {{ forms.selectField({
+            label: "Embedding Model",
+            instructions: "Model used for knowledge base embeddings.",
+            id: "embeddingModel",
+            name: "embeddingModel",
+            value: settings.embeddingModel,
+            options: [
+                { label: "text-embedding-3-small (OpenAI)", value: "text-embedding-3-small" },
+                { label: "text-embedding-3-large (OpenAI)", value: "text-embedding-3-large" },
+            ],
+        }) }}
+
+        {{ forms.textField({
+            label: "Max Tokens",
+            instructions: "Maximum tokens for AI response.",
+            id: "maxTokens",
+            name: "maxTokens",
+            value: settings.maxTokens,
+            type: "number",
+            min: 100,
+            max: 8192,
+            size: 10,
+        }) }}
+
+        {{ forms.textField({
+            label: "Temperature",
+            instructions: "Controls randomness (0 = deterministic, 2 = creative).",
+            id: "temperature",
+            name: "temperature",
+            value: settings.temperature,
+            type: "number",
+            min: 0,
+            max: 2,
+            step: 0.1,
+            size: 10,
+        }) }}
+    </div>
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Agent Identity</h2>
+
+        {{ forms.textField({
+            label: "Agent Name",
+            instructions: "Display name shown in the chat widget.",
+            id: "agentName",
+            name: "agentName",
+            value: settings.agentName,
+        }) }}
+
+        {{ forms.textareaField({
+            label: "Agent Persona",
+            instructions: "System prompt that defines how the agent should behave.",
+            id: "agentPersona",
+            name: "agentPersona",
+            value: settings.agentPersona,
+            rows: 5,
+            class: "fullwidth",
+        }) }}
+    </div>
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Business Information</h2>
+        <p class="light">The AI agent can use this info to answer questions about your business.</p>
+
+        {{ forms.textField({
+            label: "Business Name",
+            id: "businessName",
+            name: "businessName",
+            value: settings.businessName,
+        }) }}
+
+        {{ forms.textareaField({
+            label: "Business Description",
+            id: "businessDescription",
+            name: "businessDescription",
+            value: settings.businessDescription,
+            rows: 3,
+        }) }}
+
+        {{ forms.textField({
+            label: "Contact Info",
+            instructions: "Email, phone, address, etc.",
+            id: "businessContact",
+            name: "businessContact",
+            value: settings.businessContact,
+        }) }}
+
+        {{ forms.textField({
+            label: "Business Hours",
+            id: "businessHours",
+            name: "businessHours",
+            value: settings.businessHours,
+        }) }}
+
+        {{ forms.textareaField({
+            label: "Additional Info",
+            id: "businessExtra",
+            name: "businessExtra",
+            value: settings.businessExtra,
+            rows: 3,
+        }) }}
+    </div>
+
+    <button type="submit" class="btn submit">Save Settings</button>
+</form>
+
+{% js %}
+document.getElementById('aiProvider').addEventListener('change', function() {
+    document.getElementById('openai-models').style.display = this.value === 'openai' ? '' : 'none';
+    document.getElementById('anthropic-models').style.display = this.value === 'anthropic' ? '' : 'none';
+});
+{% endjs %}
+{% endblock %}

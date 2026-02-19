@@ -1,0 +1,66 @@
+{% extends "_layouts/cp" %}
+{% set title = "Conversations" %}
+{% set selectedSubnavItem = "conversations" %}
+
+{% block content %}
+<div class="pane">
+    <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
+        <form method="get" action="{{ cpUrl('ai-agent/conversations') }}" style="display: flex; gap: 12px; align-items: center;">
+            <select name="status" class="text">
+                <option value="">All Statuses</option>
+                <option value="active" {{ status == 'active' ? 'selected' : '' }}>Active</option>
+                <option value="closed" {{ status == 'closed' ? 'selected' : '' }}>Closed</option>
+                <option value="escalated" {{ status == 'escalated' ? 'selected' : '' }}>Escalated</option>
+            </select>
+            <button type="submit" class="btn">Filter</button>
+        </form>
+        <span class="light" style="margin-left: auto;">{{ total }} conversation{{ total != 1 ? 's' : '' }}</span>
+    </div>
+
+    {% if conversations | length %}
+    <table class="data fullwidth">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Session</th>
+                <th>Page</th>
+                <th>Status</th>
+                <th>IP</th>
+                <th>Started</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in conversations %}
+            <tr>
+                <td>#{{ c.id }}</td>
+                <td><code>{{ c.sessionId[:12] }}...</code></td>
+                <td>{{ c.pageUrl ?? '—' }}</td>
+                <td>
+                    <span class="status {{ c.status == 'active' ? 'live' : (c.status == 'escalated' ? 'expired' : '') }}"></span>
+                    {{ c.status | capitalize }}
+                </td>
+                <td>{{ c.ipAddress ?? '—' }}</td>
+                <td>{{ c.dateCreated }}</td>
+                <td><a href="{{ cpUrl('ai-agent/conversations/' ~ c.id) }}" class="btn small">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if total > perPage %}
+    <div style="margin-top: 16px; display: flex; gap: 8px; justify-content: center;">
+        {% for p in 1..(total / perPage) | round(0, 'ceil') %}
+            {% if p == page %}
+                <span class="btn small disabled">{{ p }}</span>
+            {% else %}
+                <a href="{{ cpUrl('ai-agent/conversations', { page: p, status: status }) }}" class="btn small">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="light">No conversations found.</p>
+    {% endif %}
+</div>
+{% endblock %}

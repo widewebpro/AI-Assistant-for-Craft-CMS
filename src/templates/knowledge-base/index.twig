@@ -1,0 +1,140 @@
+{% extends "_layouts/cp" %}
+{% set title = "Knowledge Base" %}
+{% set selectedSubnavItem = "knowledge-base" %}
+
+{% block content %}
+<div class="pane" style="margin-bottom: 24px;">
+    <h2>Upload Files</h2>
+    <p class="light">Upload documents to build your AI agent's knowledge base. Supported formats: PDF, TXT, Markdown, DOCX.</p>
+
+    <form method="post" enctype="multipart/form-data" accept-charset="UTF-8" id="kb-upload-form">
+        {{ csrfInput() }}
+        {{ actionInput('ai-agent/knowledge-base/upload') }}
+        {{ redirectInput('ai-agent/knowledge-base') }}
+
+        <div id="kb-dropzone" style="
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 16px;
+        ">
+            <p style="margin: 0; font-size: 15px; color: #6b7280;">
+                Drag & drop files here, or <strong>click to browse</strong>
+            </p>
+            <p style="margin: 4px 0 0; font-size: 13px; color: #9ca3af;">
+                PDF, TXT, MD, DOCX — Max 10MB per file
+            </p>
+            <input type="file" name="kbFiles[]" id="kb-file-input" multiple
+                   accept=".pdf,.txt,.md,.docx,application/pdf,text/plain,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                   style="display: none;">
+        </div>
+
+        <div id="kb-file-list" style="display: none; margin-bottom: 16px;"></div>
+
+        <button type="submit" class="btn submit" id="kb-upload-btn" disabled>Upload & Process</button>
+    </form>
+</div>
+
+<div class="pane">
+    <h2>Knowledge Base Files</h2>
+    {% set files = craft.app.db.createCommand("SELECT * FROM {{%aiagent_knowledge_files}} ORDER BY dateCreated DESC").queryAll() %}
+
+    {% if files | length %}
+    <table class="data fullwidth">
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th>Chunks</th>
+                <th>Status</th>
+                <th>Uploaded</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for file in files %}
+            <tr>
+                <td><strong>{{ file.originalName }}</strong></td>
+                <td>{{ file.mimeType }}</td>
+                <td>{{ (file.fileSize / 1024) | round(1) }} KB</td>
+                <td>{{ file.chunkCount }}</td>
+                <td>
+                    <span class="status {{ file.status == 'ready' ? 'live' : (file.status == 'error' ? 'expired' : 'pending') }}"></span>
+                    {{ file.status | capitalize }}
+                </td>
+                <td>{{ file.dateCreated }}</td>
+                <td>
+                    <form method="post" style="display: inline;">
+                        {{ csrfInput() }}
+                        {{ actionInput('ai-agent/knowledge-base/reprocess') }}
+                        {{ redirectInput('ai-agent/knowledge-base') }}
+                        <input type="hidden" name="fileId" value="{{ file.id }}">
+                        <button type="submit" class="btn small">Reprocess</button>
+                    </form>
+                    <form method="post" style="display: inline;" onsubmit="return confirm('Delete this file and all its chunks?')">
+                        {{ csrfInput() }}
+                        {{ actionInput('ai-agent/knowledge-base/delete') }}
+                        {{ redirectInput('ai-agent/knowledge-base') }}
+                        <input type="hidden" name="fileId" value="{{ file.id }}">
+                        <button type="submit" class="btn small" style="color: #dc2626;">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="light">No files uploaded yet. Upload your first document above.</p>
+    {% endif %}
+</div>
+
+{% js %}
+(function() {
+    var dropzone = document.getElementById('kb-dropzone');
+    var fileInput = document.getElementById('kb-file-input');
+    var fileList = document.getElementById('kb-file-list');
+    var uploadBtn = document.getElementById('kb-upload-btn');
+
+    dropzone.addEventListener('click', function() { fileInput.click(); });
+
+    dropzone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#2563eb';
+        this.style.backgroundColor = '#eff6ff';
+    });
+
+    dropzone.addEventListener('dragleave', function() {
+        this.style.borderColor = '#d1d5db';
+        this.style.backgroundColor = '';
+    });
+
+    dropzone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#d1d5db';
+        this.style.backgroundColor = '';
+        fileInput.files = e.dataTransfer.files;
+        showFiles(fileInput.files);
+    });
+
+    fileInput.addEventListener('change', function() {
+        showFiles(this.files);
+    });
+
+    function showFiles(files) {
+        if (!files.length) { fileList.style.display = 'none'; uploadBtn.disabled = true; return; }
+        fileList.style.display = 'block';
+        uploadBtn.disabled = false;
+        var html = '';
+        for (var i = 0; i < files.length; i++) {
+            html += '<div style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">' +
+                files[i].name + ' <span class="light">(' + (files[i].size / 1024).toFixed(1) + ' KB)</span></div>';
+        }
+        fileList.innerHTML = html;
+    }
+})();
+{% endjs %}
+{% endblock %}

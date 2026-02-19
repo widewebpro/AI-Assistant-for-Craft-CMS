@@ -1,0 +1,254 @@
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+{% set title = "Appearance" %}
+{% set selectedSubnavItem = "appearance" %}
+
+{% block content %}
+<form method="post" accept-charset="UTF-8">
+    {{ csrfInput() }}
+    {{ actionInput('ai-agent/appearance/save') }}
+    {{ redirectInput('ai-agent/appearance') }}
+
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 24px;">
+        <div>
+            <div class="pane" style="margin-bottom: 24px;">
+                <h2>Colors</h2>
+
+                <div class="field">
+                    <div class="heading"><label for="primaryColor">Primary Color</label></div>
+                    <div class="instructions"><p>Main color for the widget button and message bubbles.</p></div>
+                    <div class="input" style="display: flex; gap: 8px; align-items: center;">
+                        <input type="color" id="primaryColor" name="primaryColor" value="{{ settings.primaryColor ?: '#2563eb' }}" style="width: 50px; height: 36px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; padding: 2px;">
+                        <input type="text" id="primaryColorText" value="{{ settings.primaryColor ?: '#2563eb' }}" class="text" style="width: 100px; font-family: monospace;" maxlength="7" pattern="#[0-9a-fA-F]{6}">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="heading"><label for="secondaryColor">Secondary Color</label></div>
+                    <div class="instructions"><p>Background color for received messages.</p></div>
+                    <div class="input" style="display: flex; gap: 8px; align-items: center;">
+                        <input type="color" id="secondaryColor" name="secondaryColor" value="{{ settings.secondaryColor ?: '#f3f4f6' }}" style="width: 50px; height: 36px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; padding: 2px;">
+                        <input type="text" id="secondaryColorText" value="{{ settings.secondaryColor ?: '#f3f4f6' }}" class="text" style="width: 100px; font-family: monospace;" maxlength="7">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="heading"><label for="backgroundColor">Background Color</label></div>
+                    <div class="instructions"><p>Chat panel background.</p></div>
+                    <div class="input" style="display: flex; gap: 8px; align-items: center;">
+                        <input type="color" id="backgroundColor" name="backgroundColor" value="{{ settings.backgroundColor ?: '#ffffff' }}" style="width: 50px; height: 36px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; padding: 2px;">
+                        <input type="text" id="backgroundColorText" value="{{ settings.backgroundColor ?: '#ffffff' }}" class="text" style="width: 100px; font-family: monospace;" maxlength="7">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="heading"><label for="textColor">Text Color</label></div>
+                    <div class="instructions"><p>Default text color.</p></div>
+                    <div class="input" style="display: flex; gap: 8px; align-items: center;">
+                        <input type="color" id="textColor" name="textColor" value="{{ settings.textColor ?: '#1f2937' }}" style="width: 50px; height: 36px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; padding: 2px;">
+                        <input type="text" id="textColorText" value="{{ settings.textColor ?: '#1f2937' }}" class="text" style="width: 100px; font-family: monospace;" maxlength="7">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pane" style="margin-bottom: 24px;">
+                <h2>Layout</h2>
+
+                {{ forms.selectField({
+                    label: "Widget Position",
+                    id: "widgetPosition",
+                    name: "widgetPosition",
+                    value: settings.widgetPosition,
+                    options: [
+                        { label: "Bottom Right", value: "bottom-right" },
+                        { label: "Bottom Left", value: "bottom-left" },
+                    ],
+                }) }}
+
+                {{ forms.selectField({
+                    label: "Font Family",
+                    id: "fontFamily",
+                    name: "fontFamily",
+                    value: settings.fontFamily,
+                    options: [
+                        { label: "System Default", value: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif" },
+                        { label: "Inter", value: "Inter, sans-serif" },
+                        { label: "Georgia (Serif)", value: "Georgia, serif" },
+                        { label: "Mono", value: "\"SF Mono\", Menlo, monospace" },
+                    ],
+                }) }}
+            </div>
+
+            <div class="pane" style="margin-bottom: 24px;">
+                <h2>Messages</h2>
+
+                {{ forms.textField({
+                    label: "Welcome Message",
+                    instructions: "First message shown when the chat opens.",
+                    id: "welcomeMessage",
+                    name: "welcomeMessage",
+                    value: settings.welcomeMessage,
+                    class: "fullwidth",
+                }) }}
+
+                {{ forms.textField({
+                    label: "Placeholder Text",
+                    instructions: "Input placeholder text.",
+                    id: "placeholderText",
+                    name: "placeholderText",
+                    value: settings.placeholderText,
+                    class: "fullwidth",
+                }) }}
+            </div>
+
+            <div class="pane" style="margin-bottom: 24px;">
+                <h2>Custom Code</h2>
+
+                {{ forms.textareaField({
+                    label: "Custom CSS",
+                    instructions: "Additional CSS injected into the widget's Shadow DOM.",
+                    id: "customCss",
+                    name: "customCss",
+                    value: settings.customCss,
+                    rows: 8,
+                    class: "code fullwidth",
+                }) }}
+
+                {{ forms.textareaField({
+                    label: "Custom JavaScript",
+                    instructions: "Additional JS executed after widget initialization.",
+                    id: "customJs",
+                    name: "customJs",
+                    value: settings.customJs,
+                    rows: 8,
+                    class: "code fullwidth",
+                }) }}
+            </div>
+        </div>
+
+        <div>
+            <div class="pane" style="position: sticky; top: 14px;">
+                <h2>Preview</h2>
+                <div id="widget-preview" style="
+                    width: 100%;
+                    height: 450px;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 1px solid #e5e7eb;
+                    display: flex;
+                    flex-direction: column;
+                ">
+                    <div id="preview-header" style="
+                        padding: 16px;
+                        color: white;
+                        font-weight: 600;
+                        font-size: 15px;
+                    ">{{ settings.agentName }}</div>
+                    <div id="preview-body" style="
+                        flex: 1;
+                        padding: 16px;
+                        overflow-y: auto;
+                    ">
+                        <div id="preview-welcome" style="
+                            padding: 10px 14px;
+                            border-radius: 12px 12px 12px 4px;
+                            max-width: 80%;
+                            font-size: 14px;
+                            margin-bottom: 8px;
+                        ">{{ settings.welcomeMessage }}</div>
+                        <div id="preview-user-msg" style="
+                            padding: 10px 14px;
+                            border-radius: 12px 12px 4px 12px;
+                            max-width: 80%;
+                            margin-left: auto;
+                            color: white;
+                            font-size: 14px;
+                            margin-bottom: 8px;
+                        ">Hello!</div>
+                        <div id="preview-bot-msg" style="
+                            padding: 10px 14px;
+                            border-radius: 12px 12px 12px 4px;
+                            max-width: 80%;
+                            font-size: 14px;
+                        ">Hi there! How can I help you today?</div>
+                    </div>
+                    <div id="preview-input" style="
+                        padding: 12px 16px;
+                        border-top: 1px solid #e5e7eb;
+                    ">
+                        <div style="
+                            padding: 10px 14px;
+                            border-radius: 20px;
+                            border: 1px solid #d1d5db;
+                            color: #9ca3af;
+                            font-size: 14px;
+                        " id="preview-placeholder">{{ settings.placeholderText }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn submit">Save Appearance</button>
+</form>
+
+{% js %}
+(function() {
+    var colorFields = ['primaryColor', 'secondaryColor', 'backgroundColor', 'textColor'];
+
+    colorFields.forEach(function(id) {
+        var picker = document.getElementById(id);
+        var textInput = document.getElementById(id + 'Text');
+        if (!picker || !textInput) return;
+
+        picker.addEventListener('input', function() {
+            textInput.value = this.value;
+            updatePreview();
+        });
+
+        textInput.addEventListener('input', function() {
+            var val = this.value;
+            if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                picker.value = val;
+                picker.name = id;
+                updatePreview();
+            }
+        });
+
+        textInput.addEventListener('change', function() {
+            var val = this.value;
+            if (!val.startsWith('#')) val = '#' + val;
+            if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                this.value = val;
+                picker.value = val;
+                updatePreview();
+            }
+        });
+    });
+
+    function updatePreview() {
+        var primary = document.getElementById('primaryColor').value || '#2563eb';
+        var secondary = document.getElementById('secondaryColor').value || '#f3f4f6';
+        var bg = document.getElementById('backgroundColor').value || '#ffffff';
+        var text = document.getElementById('textColor').value || '#1f2937';
+
+        document.getElementById('preview-header').style.backgroundColor = primary;
+        document.getElementById('preview-body').style.backgroundColor = bg;
+        document.getElementById('preview-body').style.color = text;
+        document.getElementById('preview-welcome').style.backgroundColor = secondary;
+        document.getElementById('preview-bot-msg').style.backgroundColor = secondary;
+        document.getElementById('preview-user-msg').style.backgroundColor = primary;
+        document.getElementById('preview-input').style.backgroundColor = bg;
+    }
+
+    document.getElementById('welcomeMessage').addEventListener('input', function() {
+        document.getElementById('preview-welcome').textContent = this.value;
+    });
+    document.getElementById('placeholderText').addEventListener('input', function() {
+        document.getElementById('preview-placeholder').textContent = this.value;
+    });
+
+    updatePreview();
+})();
+{% endjs %}
+{% endblock %}

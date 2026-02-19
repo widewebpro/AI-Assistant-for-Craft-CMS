@@ -1,0 +1,63 @@
+{% extends "_layouts/cp" %}
+{% set title = "Page Rules" %}
+{% set selectedSubnavItem = "pages" %}
+
+{% block content %}
+<form method="post" accept-charset="UTF-8">
+    {{ csrfInput() }}
+    {{ actionInput('ai-agent/pages/save') }}
+    {{ redirectInput('ai-agent/pages') }}
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Page Targeting</h2>
+        <p class="light">
+            Control which pages show the chat widget. If no rules are defined, the widget appears on all pages.
+            Use glob patterns like <code>/products/*</code> or <code>/blog/**</code>.
+        </p>
+
+        <table class="data fullwidth" id="rules-table">
+            <thead>
+                <tr>
+                    <th style="width: 60%;">URL Pattern</th>
+                    <th style="width: 25%;">Rule Type</th>
+                    <th style="width: 15%;"></th>
+                </tr>
+            </thead>
+            <tbody id="rules-body">
+                {% for rule in rules %}
+                <tr class="rule-row">
+                    <td>
+                        <input type="text" name="patterns[]" value="{{ rule.pattern }}" class="text fullwidth" placeholder="/path/*">
+                    </td>
+                    <td>
+                        <select name="ruleTypes[]" class="text fullwidth">
+                            <option value="include" {{ rule.ruleType == 'include' ? 'selected' : '' }}>Include</option>
+                            <option value="exclude" {{ rule.ruleType == 'exclude' ? 'selected' : '' }}>Exclude</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button type="button" class="btn small" onclick="this.closest('tr').remove();" style="color: #dc2626;">Remove</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="button" class="btn" id="add-rule-btn" style="margin-top: 12px;">+ Add Rule</button>
+    </div>
+
+    <button type="submit" class="btn submit">Save Page Rules</button>
+</form>
+
+{% js %}
+document.getElementById('add-rule-btn').addEventListener('click', function() {
+    var tbody = document.getElementById('rules-body');
+    var row = document.createElement('tr');
+    row.className = 'rule-row';
+    row.innerHTML = '<td><input type="text" name="patterns[]" value="" class="text fullwidth" placeholder="/path/*"></td>' +
+        '<td><select name="ruleTypes[]" class="text fullwidth"><option value="include">Include</option><option value="exclude">Exclude</option></select></td>' +
+        '<td><button type="button" class="btn small" onclick="this.closest(\'tr\').remove();" style="color: #dc2626;">Remove</button></td>';
+    tbody.appendChild(row);
+});
+{% endjs %}
+{% endblock %}
