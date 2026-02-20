@@ -1,12 +1,11 @@
 {% extends "_layouts/cp" %}
 {% set title = "Conversation #" ~ conversation.id %}
 {% set selectedSubnavItem = "conversations" %}
+{% set crumbs = [
+    { label: 'Conversations', url: cpUrl('ai-agent/conversations') },
+] %}
 
 {% block content %}
-<div style="margin-bottom: 16px;">
-    <a href="{{ cpUrl('ai-agent/conversations') }}" class="btn">&larr; Back to Conversations</a>
-</div>
-
 <div class="pane" style="margin-bottom: 24px;">
     <h2>Details</h2>
     <table class="data">

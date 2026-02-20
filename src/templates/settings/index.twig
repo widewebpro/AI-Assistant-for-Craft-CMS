@@ -1,14 +1,17 @@
 {% extends "ai-agent/settings/_layout" %}
 {% import "_includes/forms" as forms %}
-{% set title = "Settings — General" %}
+{% set title = "Settings" %}
 {% set settingsTab = "general" %}
+{% set fullPageForm = true %}
 
-{% block settingsContent %}
-<form method="post" accept-charset="UTF-8">
-    {{ csrfInput() }}
+{% block content %}
     {{ actionInput('ai-agent/settings/save') }}
     {{ redirectInput('ai-agent/settings') }}
 
+    {{ parent() }}
+{% endblock %}
+
+{% block settingsContent %}
     <div class="pane" style="margin-bottom: 24px;">
         <h2>General</h2>
 
@@ -171,9 +174,6 @@
             rows: 3,
         }) }}
     </div>
-
-    <button type="submit" class="btn submit">Save Settings</button>
-</form>
 
 {% js %}
 document.getElementById('aiProvider').addEventListener('change', function() {

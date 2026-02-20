@@ -1,13 +1,16 @@
 {% extends "ai-agent/settings/_layout" %}
-{% set title = "Settings — Pages" %}
+{% set title = "Settings" %}
 {% set settingsTab = "pages" %}
+{% set fullPageForm = true %}
 
-{% block settingsContent %}
-<form method="post" accept-charset="UTF-8">
-    {{ csrfInput() }}
+{% block content %}
     {{ actionInput('ai-agent/pages/save') }}
     {{ redirectInput('ai-agent/settings/pages') }}
 
+    {{ parent() }}
+{% endblock %}
+
+{% block settingsContent %}
     <div class="pane" style="margin-bottom: 24px;">
         <h2>Page Targeting</h2>
         <p class="light">
@@ -40,9 +43,6 @@
         </table>
         <button type="button" class="btn" id="add-rule-btn" style="margin-top: 12px;">+ Add Rule</button>
     </div>
-
-    <button type="submit" class="btn submit">Save Page Rules</button>
-</form>
 
 {% js %}
 document.getElementById('add-rule-btn').addEventListener('click', function() {

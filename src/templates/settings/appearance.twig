@@ -1,14 +1,17 @@
 {% extends "ai-agent/settings/_layout" %}
 {% import "_includes/forms" as forms %}
-{% set title = "Settings — Appearance" %}
+{% set title = "Settings" %}
 {% set settingsTab = "appearance" %}
+{% set fullPageForm = true %}
 
-{% block settingsContent %}
-<form method="post" accept-charset="UTF-8">
-    {{ csrfInput() }}
+{% block content %}
     {{ actionInput('ai-agent/appearance/save') }}
     {{ redirectInput('ai-agent/settings/appearance') }}
 
+    {{ parent() }}
+{% endblock %}
+
+{% block settingsContent %}
     <div style="display: grid; grid-template-columns: 1fr 350px; gap: 24px;">
         <div>
             <div class="pane" style="margin-bottom: 24px;">
@@ -143,9 +146,6 @@
             </div>
         </div>
     </div>
-
-    <button type="submit" class="btn submit">Save Appearance</button>
-</form>
 
 {% js %}
 (function() {
