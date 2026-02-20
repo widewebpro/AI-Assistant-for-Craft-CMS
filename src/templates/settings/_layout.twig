@@ -1,7 +1,8 @@
 {% extends "_layouts/cp" %}
 {% set selectedSubnavItem = "settings" %}
+{% set selectedTab = settingsTab ?? "general" %}
 
-{% set settingsTabs = {
+{% set tabs = {
     'general': { label: 'General', url: cpUrl('ai-agent/settings') },
     'appearance': { label: 'Appearance', url: cpUrl('ai-agent/settings/appearance') },
     'knowledge-base': { label: 'Knowledge Base', url: cpUrl('ai-agent/settings/knowledge-base') },
@@ -11,13 +12,5 @@
 } %}
 
 {% block content %}
-<nav style="display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid #e5e7eb; padding-bottom: 0;">
-    {% for key, tab in settingsTabs %}
-        <a href="{{ tab.url }}"
-           style="padding: 10px 16px; font-size: 14px; font-weight: 500; text-decoration: none; border-bottom: 2px solid {{ settingsTab == key ? '#2563eb' : 'transparent' }}; color: {{ settingsTab == key ? '#2563eb' : '#6b7280' }}; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s;"
-        >{{ tab.label }}</a>
-    {% endfor %}
-</nav>
-
-{% block settingsContent %}{% endblock %}
+    {% block settingsContent %}{% endblock %}
 {% endblock %}

@@ -1,14 +1,17 @@
 {% extends "ai-agent/settings/_layout" %}
 {% import "_includes/forms" as forms %}
-{% set title = "Settings — Escalation" %}
+{% set title = "Settings" %}
 {% set settingsTab = "escalation" %}
+{% set fullPageForm = true %}
 
-{% block settingsContent %}
-<form method="post" accept-charset="UTF-8">
-    {{ csrfInput() }}
+{% block content %}
     {{ actionInput('ai-agent/escalation/save') }}
     {{ redirectInput('ai-agent/settings/escalation') }}
 
+    {{ parent() }}
+{% endblock %}
+
+{% block settingsContent %}
     <div class="pane" style="margin-bottom: 24px;">
         <h2>Escalation</h2>
         <p class="light">When the AI agent can't help or the user explicitly asks for a human, the conversation can be escalated for human review. A contact form will appear in the chat widget to collect the user's details.</p>
@@ -19,10 +22,11 @@
             id: "escalationEnabled",
             name: "escalationEnabled",
             on: settings.escalationEnabled,
+            toggle: '#escalation-settings',
         }) }}
     </div>
 
-    <div id="escalation-settings" style="{{ not settings.escalationEnabled ? 'display:none' : '' }}">
+    <div id="escalation-settings" {% if not settings.escalationEnabled %}class="hidden"{% endif %}>
         <div class="pane" style="margin-bottom: 24px;">
             <h2>Sensitivity</h2>
             <p class="light">Controls how readily the agent agrees to escalate a conversation.</p>
@@ -105,12 +109,4 @@
         </div>
     </div>
 
-    <button type="submit" class="btn submit">Save Escalation Settings</button>
-</form>
-
-{% js %}
-document.getElementById('escalationEnabled').addEventListener('change', function() {
-    document.getElementById('escalation-settings').style.display = this.checked ? '' : 'none';
-});
-{% endjs %}
 {% endblock %}

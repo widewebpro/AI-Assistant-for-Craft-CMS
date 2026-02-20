@@ -1,14 +1,17 @@
 {% extends "ai-agent/settings/_layout" %}
 {% import "_includes/forms" as forms %}
-{% set title = "Settings — Restrictions" %}
+{% set title = "Settings" %}
 {% set settingsTab = "restrictions" %}
+{% set fullPageForm = true %}
 
-{% block settingsContent %}
-<form method="post" accept-charset="UTF-8">
-    {{ csrfInput() }}
+{% block content %}
     {{ actionInput('ai-agent/restrictions/save') }}
     {{ redirectInput('ai-agent/settings/restrictions') }}
 
+    {{ parent() }}
+{% endblock %}
+
+{% block settingsContent %}
     <div class="pane" style="margin-bottom: 24px;">
         <h2>Topic Restrictions</h2>
         <p class="light">Control what topics the AI agent can and cannot discuss.</p>
@@ -87,7 +90,4 @@
             size: 10,
         }) }}
     </div>
-
-    <button type="submit" class="btn submit">Save Restrictions</button>
-</form>
 {% endblock %}
