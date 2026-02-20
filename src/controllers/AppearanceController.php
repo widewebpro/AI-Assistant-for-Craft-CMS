@@ -6,6 +6,7 @@ use Craft;
 use craft\web\Controller;
 use widewebpro\aiagent\Plugin;
 use yii\web\Response;
+use yii\web\UploadedFile;
 
 class AppearanceController extends Controller
 {
@@ -36,6 +37,35 @@ class AppearanceController extends Controller
         $settings->customCss = $request->getBodyParam('customCss', '');
         $settings->customJs = $request->getBodyParam('customJs', '');
 
+        // Avatar handling
+        $removeAvatar = (bool)$request->getBodyParam('removeAvatar');
+        if ($removeAvatar) {
+            $this->_deleteAvatarFile();
+            $settings->avatarUrl = '';
+        }
+
+        $avatarFile = UploadedFile::getInstanceByName('avatarFile');
+        if ($avatarFile && !$avatarFile->getHasError()) {
+            $allowedExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'];
+            $ext = strtolower($avatarFile->getExtension());
+            if (in_array($ext, $allowedExtensions)) {
+                $this->_deleteAvatarFile();
+                $storagePath = Craft::$app->getPath()->getStoragePath() . '/ai-agent';
+                if (!is_dir($storagePath)) {
+                    mkdir($storagePath, 0775, true);
+                }
+                $avatarFile->saveAs($storagePath . '/avatar.' . $ext);
+                $siteUrl = rtrim(Craft::$app->getSites()->getCurrentSite()->getBaseUrl(), '/');
+                $settings->avatarUrl = $siteUrl . '/ai-agent/avatar';
+            }
+        } elseif (!$removeAvatar) {
+            $manualUrl = trim($request->getBodyParam('avatarUrl', ''));
+            if ($manualUrl !== '' && $manualUrl !== $settings->avatarUrl) {
+                $this->_deleteAvatarFile();
+                $settings->avatarUrl = $manualUrl;
+            }
+        }
+
         if (!Craft::$app->getPlugins()->savePluginSettings($plugin, $settings->toArray())) {
             Craft::$app->getSession()->setError('Could not save appearance settings.');
             return null;
@@ -43,6 +73,17 @@ class AppearanceController extends Controller
 
         Craft::$app->getSession()->setNotice('Appearance settings saved.');
         return $this->redirect('ai-agent/settings/appearance');
+    }
+
+    private function _deleteAvatarFile(): void
+    {
+        $storagePath = Craft::$app->getPath()->getStoragePath() . '/ai-agent';
+        $files = glob($storagePath . '/avatar.*');
+        foreach ($files as $f) {
+            if (is_file($f)) {
+                unlink($f);
+            }
+        }
     }
 
     private function _ensureHexColor(?string $value, string $default): string

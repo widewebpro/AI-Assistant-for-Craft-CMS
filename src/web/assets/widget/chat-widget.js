@@ -64,10 +64,14 @@
   container.appendChild(panel);
 
   // Header
+  var avatarContent = config.avatarUrl
+    ? '<img src="' + escapeHtml(config.avatarUrl) + '" alt="" class="ai-avatar-img">'
+    : config.agentName.charAt(0).toUpperCase();
+
   var header = document.createElement('div');
   header.className = 'ai-header';
   header.innerHTML = '<div class="ai-header-info"><div class="ai-avatar">' +
-    config.agentName.charAt(0).toUpperCase() +
+    avatarContent +
     '</div><div><div class="ai-name">' + escapeHtml(config.agentName) +
     '</div><div class="ai-status">Online</div></div></div>' +
     '<button class="ai-close" aria-label="Close chat">&times;</button>';
@@ -169,6 +173,10 @@
     var wrapper = document.createElement('div');
     wrapper.className = 'ai-msg ai-msg-' + role;
 
+    if (role === 'assistant') {
+      wrapper.appendChild(createMsgAvatar());
+    }
+
     var bubble = document.createElement('div');
     bubble.className = 'ai-bubble';
     bubble.innerHTML = renderMarkdown(content);
@@ -177,13 +185,28 @@
     messagesEl.appendChild(wrapper);
   }
 
+  function createMsgAvatar() {
+    var el = document.createElement('div');
+    el.className = 'ai-msg-avatar';
+    if (config.avatarUrl) {
+      el.innerHTML = '<img src="' + escapeHtml(config.avatarUrl) + '" alt="" class="ai-avatar-img">';
+    } else {
+      el.textContent = config.agentName.charAt(0).toUpperCase();
+    }
+    return el;
+  }
+
   function streamResponse(text) {
     isStreaming = true;
 
     // Show typing indicator
     var typingEl = document.createElement('div');
     typingEl.className = 'ai-msg ai-msg-assistant';
-    typingEl.innerHTML = '<div class="ai-bubble ai-typing"><span></span><span></span><span></span></div>';
+    typingEl.appendChild(createMsgAvatar());
+    var typingBubble = document.createElement('div');
+    typingBubble.className = 'ai-bubble ai-typing';
+    typingBubble.innerHTML = '<span></span><span></span><span></span>';
+    typingEl.appendChild(typingBubble);
     messagesEl.appendChild(typingEl);
     scrollToBottom();
 
@@ -204,6 +227,7 @@
         messagesEl.removeChild(typingEl);
         var wrapper = document.createElement('div');
         wrapper.className = 'ai-msg ai-msg-assistant';
+        wrapper.appendChild(createMsgAvatar());
         bubbleEl = document.createElement('div');
         bubbleEl.className = 'ai-bubble';
         wrapper.appendChild(bubbleEl);
@@ -282,6 +306,7 @@
 
     var formWrapper = document.createElement('div');
     formWrapper.className = 'ai-msg ai-msg-assistant';
+    formWrapper.appendChild(createMsgAvatar());
 
     var formBubble = document.createElement('div');
     formBubble.className = 'ai-bubble ai-escalation-form';
@@ -438,7 +463,8 @@
       '@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }' +
       '.ai-header { background: ' + primary + '; color: #fff; padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }' +
       '.ai-header-info { display: flex; align-items: center; gap: 10px; }' +
-      '.ai-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }' +
+      '.ai-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; overflow: hidden; flex-shrink: 0; }' +
+      '.ai-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }' +
       '.ai-name { font-weight: 600; font-size: 15px; }' +
       '.ai-status { font-size: 12px; opacity: 0.8; }' +
       '.ai-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 0 4px; opacity: 0.8; line-height: 1; }' +
@@ -446,7 +472,9 @@
       '.ai-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 8px; }' +
       '.ai-msg { display: flex; }' +
       '.ai-msg-user { justify-content: flex-end; }' +
-      '.ai-msg-assistant { justify-content: flex-start; }' +
+      '.ai-msg-assistant { justify-content: flex-start; align-items: flex-end; }' +
+      '.ai-msg-avatar { width: 24px; height: 24px; border-radius: 50%; background: ' + primary + '; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; flex-shrink: 0; overflow: hidden; margin-right: 6px; }' +
+      '.ai-msg-avatar .ai-avatar-img { width: 100%; height: 100%; object-fit: cover; }' +
       '.ai-bubble { max-width: 85%; padding: 10px 14px; border-radius: 16px; word-wrap: break-word; overflow-wrap: break-word; }' +
       '.ai-msg-user .ai-bubble { background: ' + primary + '; color: #fff; border-bottom-right-radius: 4px; }' +
       '.ai-msg-assistant .ai-bubble { background: ' + secondary + '; color: ' + text + '; border-bottom-left-radius: 4px; }' +

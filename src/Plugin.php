@@ -118,6 +118,7 @@ class Plugin extends BasePlugin
                 $event->rules['ai-agent/chat/stream'] = 'ai-agent/chat-api/stream';
                 $event->rules['ai-agent/widget-config'] = 'ai-agent/chat-api/widget-config';
                 $event->rules['ai-agent/escalate'] = 'ai-agent/chat-api/escalate';
+                $event->rules['ai-agent/avatar'] = 'ai-agent/chat-api/avatar';
             }
         );
     }

@@ -27,6 +27,7 @@ class Settings extends Model
     public string $widgetPosition = 'bottom-right'; // bottom-right | bottom-left
     public string $welcomeMessage = 'Hello! How can I help you today?';
     public string $placeholderText = 'Type your message...';
+    public string $avatarUrl = '';
     public string $customCss = '';
     public string $customJs = '';
 

@@ -11,7 +11,7 @@ use yii\web\TooManyRequestsHttpException;
 
 class ChatApiController extends Controller
 {
-    protected array|bool|int $allowAnonymous = ['send', 'stream', 'widget-config', 'escalate'];
+    protected array|bool|int $allowAnonymous = ['send', 'stream', 'widget-config', 'escalate', 'avatar'];
     public $enableCsrfValidation = false;
 
     /**
@@ -284,5 +284,38 @@ class ChatApiController extends Controller
             ob_flush();
         }
         flush();
+    }
+
+    /**
+     * GET /ai-agent/avatar — Serve the uploaded avatar image.
+     */
+    public function actionAvatar(): Response
+    {
+        $storagePath = Craft::$app->getPath()->getStoragePath() . '/ai-agent';
+        $files = glob($storagePath . '/avatar.*');
+
+        if (empty($files) || !file_exists($files[0])) {
+            throw new \yii\web\NotFoundHttpException('Avatar not found.');
+        }
+
+        $filePath = $files[0];
+        $mimeTypes = [
+            'png' => 'image/png',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'svg' => 'image/svg+xml',
+            'webp' => 'image/webp',
+        ];
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        $mime = $mimeTypes[$ext] ?? 'application/octet-stream';
+
+        $response = Craft::$app->getResponse();
+        $response->headers->set('Content-Type', $mime);
+        $response->headers->set('Cache-Control', 'public, max-age=86400');
+        $response->format = Response::FORMAT_RAW;
+        $response->data = file_get_contents($filePath);
+
+        return $response;
     }
 }

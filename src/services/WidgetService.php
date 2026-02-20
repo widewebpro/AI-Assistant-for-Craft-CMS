@@ -22,6 +22,7 @@ class WidgetService extends Component
         return [
             'enabled' => $settings->enabled,
             'agentName' => $settings->agentName,
+            'avatarUrl' => $settings->avatarUrl,
             'welcomeMessage' => $settings->welcomeMessage,
             'placeholderText' => $settings->placeholderText,
             'position' => $settings->widgetPosition,
