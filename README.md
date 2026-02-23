@@ -13,14 +13,17 @@ Supports **OpenAI** and **Anthropic** as AI providers, with a built-in knowledge
 - **Smart message classification** — Automatically detects greetings, questions, off-topic messages, and escalation requests. Greetings get a natural response; questions trigger tool-based retrieval; off-topic messages return a configurable fallback.
 - **Two-step AI pipeline** — Step 1: message classification and tool selection. Step 2: context-aware answer generation based on tool results.
 - **5 built-in tools** — Knowledge base search, page context extraction, business info retrieval, topic listing, human escalation.
-- **Configurable escalation** — When the agent can't help or the user asks for a human, a contact form appears in the chat. Configurable fields (name, email, phone), custom questions, sensitivity level, and confirmation messages.
+- **Configurable escalation** — When the agent can't help or the user asks for a human, a contact form appears in the chat. Fully customizable form fields (text, email, phone, textarea, select, checkbox), sensitivity level, and confirmation messages.
 - **Streaming responses** — Real-time Server-Sent Events (SSE) streaming to the chat widget.
 - **Multi-provider** — OpenAI (GPT-4o, GPT-4o Mini, GPT-4 Turbo) and Anthropic (Claude 3.5 Sonnet, Claude 3.7 Sonnet, Claude 3 Haiku).
 - **Full admin control** — Every setting configurable from the Craft CMS control panel.
 - **Page targeting** — Show or hide the widget on specific pages using glob URL patterns.
 - **Topic restrictions** — Define allowed/disallowed topics with custom fallback messages.
 - **Conversation history** — Browse and review all conversations from the admin panel. Escalated conversations are flagged with contact details.
-- **Customizable appearance** — Colors, fonts, position, welcome message, custom CSS/JS injection with live preview.
+- **Agent avatar** — Upload an image or provide a URL. Shown in the chat header and next to every assistant message.
+- **Webhook / CRM integration** — Route escalation form submissions to any external service. Configurable endpoints, HTTP methods, headers, and field mapping with dot-notation support for nested payloads.
+- **Native Craft CP patterns** — Settings pages use Craft's native full-page form, header tabs, Cmd+S save shortcut, unsaved-changes warnings, and breadcrumbs.
+- **Customizable appearance** — Colors, fonts, position, welcome message, avatar, custom CSS/JS injection with live preview.
 - **Rate limiting** — Per-minute message limits and max messages per conversation.
 
 ---
@@ -72,6 +75,7 @@ All configuration is done under **Settings**, which contains six tabs:
 
 Customize the widget look and feel with a live preview:
 
+- **Avatar** — Upload an image or paste a URL. Displayed in the chat header and as a small icon next to every assistant message. Falls back to initials if not set.
 - **Colors** — Primary, secondary, background, text
 - **Position** — Bottom-right or bottom-left
 - **Font** — System default, Inter, Georgia, Mono
@@ -115,10 +119,11 @@ Configure how the agent hands off conversations to humans:
 | Sensitivity | **Low** — only when user explicitly demands a human. **Medium** (default) — when user clearly asks for help. **High** — also when user seems frustrated or agent fails repeatedly. |
 | Escalation Message | Shown to the user before the contact form appears |
 | Confirmation Message | Shown after the user submits the contact form |
-| Contact Form Fields | Toggle Name, Email, Phone fields |
-| Custom Questions | Add business-specific fields (one per line, e.g. "Order number", "Preferred contact time") |
+| Contact Form Fields | Fully customizable via an editable table — define label, handle, type (text, email, phone, textarea, select, checkbox), required flag, placeholder, and options |
+| Submission Actions | Route form data to external services via webhooks — configure endpoint URL, HTTP method, format (JSON/form), and custom headers |
+| Field Mapping | Map form field handles to external field names. Supports dot notation for nested payloads (e.g. `email` → `properties.email`) |
 
-When escalation triggers, the chat widget displays an inline contact form. Submitted data is saved to the conversation metadata and visible in the admin panel.
+When escalation triggers, the chat widget displays an inline contact form built from your field definitions. Submitted data is saved to the conversation metadata, visible in the admin panel, and optionally forwarded to configured webhook endpoints.
 
 ---
 
@@ -165,10 +170,11 @@ This prevents hallucination by ensuring the agent always retrieves information b
 1. User asks to speak with a human (sensitivity determines threshold)
 2. AI calls the `escalate` tool
 3. Conversation status is set to `escalated` in the database
-4. Chat widget shows an inline contact form with configured fields
+4. Chat widget shows an inline contact form built from the admin-defined fields
 5. User submits their details → saved to conversation metadata
-6. Confirmation message displayed
-7. Admin can view escalated conversations and contact details in the CP
+6. Enabled webhook actions fire — form data is mapped and sent to configured endpoints (CRMs, helpdesks, Zapier, etc.)
+7. Confirmation message displayed
+8. Admin can view escalated conversations, contact details, and webhook results in the CP
 
 ### Chat Widget
 

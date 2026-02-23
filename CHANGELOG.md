@@ -2,6 +2,27 @@
 
 All notable changes to AI Assistant for Craft CMS will be documented in this file.
 
+## [0.2.0] - 2026-02-23
+
+### Added
+- **Agent avatar** — Upload an image or provide a URL in the Appearance settings. Displayed in the chat header and as a 24px icon next to every assistant message. Falls back to first-letter initials when not set.
+- **Dynamic escalation form builder** — Contact Form Fields are now defined via a native Craft editable table. Each field has a label, handle, type (text, email, phone, textarea, select, checkbox), required flag, placeholder, and options column. Replaces the hardcoded Name/Email/Phone checkboxes and custom questions textarea.
+- **Webhook / CRM integration** — New "Submission Actions" section in Escalation settings. Configure any number of webhook endpoints with name, URL, HTTP method (POST/PUT/PATCH), format (JSON/form-encoded), and custom headers. All enabled actions fire automatically when an escalation form is submitted.
+- **Field mapping** — Separate "Field Mapping" table maps form handles to external field names. Supports dot notation for nested payloads (e.g. `email` → `properties.email`). Available form handles are shown as a quick reference below the mapping table.
+- **Native Craft CP patterns** — All settings pages now use `fullPageForm`, providing a native Save button in the header, Cmd+S / Ctrl+S keyboard shortcut, and unsaved-changes warnings. Tabs render via Craft's native header tab system. Conversation detail view uses native breadcrumbs.
+- **Escalation lightswitch toggle** — Uses Craft's native `toggle` attribute instead of custom JavaScript.
+- **WebhookService** — New service that handles building payloads, parsing field maps, resolving nested keys via dot notation, and firing Guzzle requests with error logging. Webhook results are saved to conversation metadata.
+
+### Changed
+- Escalation settings restructured: "Contact Form Fields" and "Custom Questions" replaced by a single editable table. "Submission Actions" and "Field Mapping" are new dedicated sections.
+- Settings page titles simplified to "Settings" (tab indicates which section).
+- All settings templates refactored to use `{% set fullPageForm = true %}` with `actionInput`/`redirectInput` inside `{% block content %}`.
+- Settings layout uses Craft's native `tabs` variable instead of custom HTML navigation.
+- Conversations detail view uses native `crumbs` instead of a manual back button.
+
+### Fixed
+- `foreach()` error when editable tables submit empty string instead of array (Craft's hidden input fallback). Added `_ensureArray()` guards in controller and `is_array()` checks in Settings model `init()`.
+
 ## [0.1.1] - 2026-02-19
 
 ### Added

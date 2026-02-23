@@ -43,11 +43,10 @@ class Settings extends Model
     public bool $escalationEnabled = true;
     public string $escalationSensitivity = 'medium'; // low | medium | high
     public string $escalationMessage = 'Let me connect you with a team member. Please share your contact details so we can follow up.';
-    public bool $escalationFieldName = true;
-    public bool $escalationFieldEmail = true;
-    public bool $escalationFieldPhone = false;
-    public string $escalationCustomQuestions = '';
     public string $escalationConfirmation = 'Thank you! A team member will reach out to you shortly.';
+    public array $escalationFields = [];
+    public array $escalationActions = [];
+    public array $escalationFieldMap = [];
 
     // Business Info (for get_business_info tool)
     public string $businessName = '';
@@ -63,6 +62,24 @@ class Settings extends Model
         $this->secondaryColor = $this->_normalizeColor($this->secondaryColor, '#f3f4f6');
         $this->backgroundColor = $this->_normalizeColor($this->backgroundColor, '#ffffff');
         $this->textColor = $this->_normalizeColor($this->textColor, '#1f2937');
+
+        if (!is_array($this->escalationFields)) {
+            $this->escalationFields = [];
+        }
+        if (!is_array($this->escalationActions)) {
+            $this->escalationActions = [];
+        }
+        if (!is_array($this->escalationFieldMap)) {
+            $this->escalationFieldMap = [];
+        }
+
+        if (empty($this->escalationFields)) {
+            $this->escalationFields = [
+                ['label' => 'Name', 'handle' => 'name', 'type' => 'text', 'required' => '1', 'placeholder' => 'Your name', 'options' => ''],
+                ['label' => 'Email', 'handle' => 'email', 'type' => 'email', 'required' => '1', 'placeholder' => 'you@example.com', 'options' => ''],
+                ['label' => 'Phone', 'handle' => 'phone', 'type' => 'tel', 'required' => '', 'placeholder' => 'Phone number', 'options' => ''],
+            ];
+        }
     }
 
     private function _normalizeColor(string $value, string $default): string

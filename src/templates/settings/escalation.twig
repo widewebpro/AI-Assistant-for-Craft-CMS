@@ -38,9 +38,9 @@
                 name: "escalationSensitivity",
                 value: settings.escalationSensitivity,
                 options: [
-                    { label: "Low — Only when user explicitly demands a human (e.g. \"let me talk to a person\")", value: "low" },
+                    { label: "Low — Only when user explicitly demands a human", value: "low" },
                     { label: "Medium — When user clearly asks for human help (default)", value: "medium" },
-                    { label: "High — Also when user seems frustrated or the agent fails to help after a few attempts", value: "high" },
+                    { label: "High — Also when user seems frustrated or agent fails to help", value: "high" },
                 ],
             }) }}
         </div>
@@ -71,41 +71,113 @@
 
         <div class="pane" style="margin-bottom: 24px;">
             <h2>Contact Form Fields</h2>
-            <p class="light">Choose which fields to show in the contact form when a conversation is escalated.</p>
+            <p class="light">Define the fields shown in the escalation contact form. The <strong>Handle</strong> is the machine name used for field mapping and webhook payloads.</p>
 
-            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
-                <label style="display: flex; align-items: center; gap: 10px; font-size: 14px;">
-                    <input type="hidden" name="escalationFieldName" value="0">
-                    <input type="checkbox" name="escalationFieldName" value="1" {{ settings.escalationFieldName ? 'checked' : '' }} style="width: 18px; height: 18px;">
-                    <span><strong>Name</strong> — visitor's full name</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 10px; font-size: 14px;">
-                    <input type="hidden" name="escalationFieldEmail" value="0">
-                    <input type="checkbox" name="escalationFieldEmail" value="1" {{ settings.escalationFieldEmail ? 'checked' : '' }} style="width: 18px; height: 18px;">
-                    <span><strong>Email</strong> — visitor's email address</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 10px; font-size: 14px;">
-                    <input type="hidden" name="escalationFieldPhone" value="0">
-                    <input type="checkbox" name="escalationFieldPhone" value="1" {{ settings.escalationFieldPhone ? 'checked' : '' }} style="width: 18px; height: 18px;">
-                    <span><strong>Phone</strong> — visitor's phone number</span>
-                </label>
-            </div>
+            {{ forms.editableTableField({
+                label: "Fields",
+                id: "escalationFields",
+                name: "escalationFields",
+                cols: {
+                    label: { heading: 'Label', type: 'singleline', placeholder: 'Full Name' },
+                    handle: { heading: 'Handle', type: 'singleline', code: true, placeholder: 'name' },
+                    type: {
+                        heading: 'Type',
+                        type: 'select',
+                        options: [
+                            { label: 'Text', value: 'text' },
+                            { label: 'Email', value: 'email' },
+                            { label: 'Phone', value: 'tel' },
+                            { label: 'Textarea', value: 'textarea' },
+                            { label: 'Select', value: 'select' },
+                            { label: 'Checkbox', value: 'checkbox' },
+                        ],
+                    },
+                    required: { heading: 'Required', type: 'lightswitch', thin: true },
+                    placeholder: { heading: 'Placeholder', type: 'singleline', placeholder: 'Enter value…' },
+                    options: { heading: 'Options', type: 'singleline', placeholder: 'A, B, C', info: 'Comma-separated. Used for Select and Checkbox types.' },
+                },
+                rows: fieldRows,
+                allowAdd: true,
+                allowDelete: true,
+                allowReorder: true,
+                addRowLabel: "Add a field",
+            }) }}
         </div>
 
         <div class="pane" style="margin-bottom: 24px;">
-            <h2>Custom Questions</h2>
-            <p class="light">Add additional fields to the escalation form for your specific business needs.</p>
+            <h2>Submission Actions</h2>
+            <p class="light">Route escalation form submissions to external services — CRMs, helpdesks, Zapier, custom APIs, etc.</p>
 
-            {{ forms.textareaField({
-                label: "Custom Questions",
-                instructions: "One per line. Each line becomes a text input field in the contact form.",
-                id: "escalationCustomQuestions",
-                name: "escalationCustomQuestions",
-                value: settings.escalationCustomQuestions,
-                rows: 4,
-                class: "code fullwidth",
-                placeholder: "Order number\nPreferred contact time\nCompany name",
+            {{ forms.editableTableField({
+                label: "Webhook Actions",
+                id: "escalationActions",
+                name: "escalationActions",
+                cols: {
+                    enabled: { heading: 'On', type: 'lightswitch', thin: true },
+                    name: { heading: 'Name', type: 'singleline', placeholder: 'HubSpot' },
+                    url: { heading: 'Endpoint URL', type: 'singleline', placeholder: 'https://hooks.example.com/...' },
+                    method: {
+                        heading: 'Method',
+                        type: 'select',
+                        thin: true,
+                        options: [
+                            { label: 'POST', value: 'POST' },
+                            { label: 'PUT', value: 'PUT' },
+                            { label: 'PATCH', value: 'PATCH' },
+                        ],
+                    },
+                    format: {
+                        heading: 'Format',
+                        type: 'select',
+                        thin: true,
+                        options: [
+                            { label: 'JSON', value: 'json' },
+                            { label: 'Form', value: 'form' },
+                        ],
+                    },
+                    headers: { heading: 'Headers', type: 'multiline', placeholder: 'Authorization: Bearer xxx' },
+                },
+                rows: actionRows,
+                allowAdd: true,
+                allowDelete: true,
+                allowReorder: true,
+                addRowLabel: "Add an action",
             }) }}
+        </div>
+
+        <div class="pane" style="margin-bottom: 24px;">
+            <h2>Field Mapping</h2>
+            <p class="light">
+                Map your form field handles to the external field names expected by your webhook endpoints.
+                Supports dot notation for nested payloads (e.g. <code>properties.email</code>).
+                If no mapping is defined, form data is sent as-is using the field handles.
+            </p>
+
+            {{ forms.editableTableField({
+                label: "Field Map",
+                id: "escalationFieldMap",
+                name: "escalationFieldMap",
+                cols: {
+                    formHandle: { heading: 'Form Field Handle', type: 'singleline', code: true, placeholder: 'email' },
+                    externalName: { heading: 'External / CRM Field Name', type: 'singleline', code: true, placeholder: 'properties.email' },
+                },
+                rows: fieldMapRows,
+                allowAdd: true,
+                allowDelete: true,
+                allowReorder: false,
+                addRowLabel: "Add mapping",
+            }) }}
+
+            {% if settings.escalationFields | length %}
+                <div style="margin-top: 12px; padding: 12px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <div style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Available form handles</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        {% for field in settings.escalationFields %}
+                            <code style="background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 13px;">{{ field.handle }}</code>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
 

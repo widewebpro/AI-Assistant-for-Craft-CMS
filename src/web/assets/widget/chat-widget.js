@@ -301,8 +301,7 @@
 
   function showEscalationForm() {
     var esc = config.escalation || {};
-    var fields = esc.fields || {};
-    var customQs = esc.customQuestions || [];
+    var fields = esc.fields || [];
 
     var formWrapper = document.createElement('div');
     formWrapper.className = 'ai-msg ai-msg-assistant';
@@ -313,20 +312,35 @@
 
     var html = '<div style="font-weight:600;margin-bottom:8px;">Contact Information</div>';
 
-    if (fields.name) {
-      html += '<div class="ai-esc-field"><label>Name</label><input type="text" name="name" placeholder="Your name" class="ai-esc-input"></div>';
-    }
-    if (fields.email) {
-      html += '<div class="ai-esc-field"><label>Email</label><input type="email" name="email" placeholder="your@email.com" class="ai-esc-input"></div>';
-    }
-    if (fields.phone) {
-      html += '<div class="ai-esc-field"><label>Phone</label><input type="tel" name="phone" placeholder="Phone number" class="ai-esc-input"></div>';
-    }
+    for (var i = 0; i < fields.length; i++) {
+      var f = fields[i];
+      var handle = escapeHtml(f.handle || 'field_' + i);
+      var label = escapeHtml(f.label || handle);
+      var ph = escapeHtml(f.placeholder || '');
+      var req = f.required ? ' data-required="1"' : '';
 
-    for (var q = 0; q < customQs.length; q++) {
-      var qLabel = customQs[q];
-      var qKey = 'custom_' + q;
-      html += '<div class="ai-esc-field"><label>' + escapeHtml(qLabel) + '</label><input type="text" name="' + qKey + '" placeholder="' + escapeHtml(qLabel) + '" class="ai-esc-input"></div>';
+      html += '<div class="ai-esc-field"><label>' + label + (f.required ? ' <span style="color:#dc2626">*</span>' : '') + '</label>';
+
+      if (f.type === 'textarea') {
+        html += '<textarea name="' + handle + '" placeholder="' + ph + '" class="ai-esc-input" rows="3"' + req + '></textarea>';
+      } else if (f.type === 'select' && f.options && f.options.length) {
+        html += '<select name="' + handle + '" class="ai-esc-input"' + req + '><option value="">— Select —</option>';
+        for (var o = 0; o < f.options.length; o++) {
+          html += '<option value="' + escapeHtml(f.options[o]) + '">' + escapeHtml(f.options[o]) + '</option>';
+        }
+        html += '</select>';
+      } else if (f.type === 'checkbox' && f.options && f.options.length) {
+        html += '<div class="ai-esc-checkboxes" data-name="' + handle + '"' + req + '>';
+        for (var c = 0; c < f.options.length; c++) {
+          html += '<label class="ai-esc-checkbox-label"><input type="checkbox" value="' + escapeHtml(f.options[c]) + '"> ' + escapeHtml(f.options[c]) + '</label>';
+        }
+        html += '</div>';
+      } else {
+        var inputType = (f.type === 'email' || f.type === 'tel') ? f.type : 'text';
+        html += '<input type="' + inputType + '" name="' + handle + '" placeholder="' + ph + '" class="ai-esc-input"' + req + '>';
+      }
+
+      html += '</div>';
     }
 
     html += '<button type="button" class="ai-esc-submit">Submit</button>';
@@ -337,18 +351,38 @@
 
     var submitBtn = formBubble.querySelector('.ai-esc-submit');
     submitBtn.addEventListener('click', function () {
-      var inputs = formBubble.querySelectorAll('.ai-esc-input');
       var contactData = {};
       var hasRequired = true;
 
+      // Collect text/email/tel/textarea/select inputs
+      var inputs = formBubble.querySelectorAll('.ai-esc-input');
       inputs.forEach(function (inp) {
-        var val = inp.value.trim();
-        contactData[inp.name] = val;
-        if (!val && (inp.name === 'name' || inp.name === 'email')) {
-          inp.style.borderColor = '#dc2626';
+        if (inp.name) {
+          var val = inp.value.trim();
+          contactData[inp.name] = val;
+          if (!val && inp.getAttribute('data-required') === '1') {
+            inp.style.borderColor = '#dc2626';
+            hasRequired = false;
+          } else {
+            inp.style.borderColor = '';
+          }
+        }
+      });
+
+      // Collect checkbox groups
+      var checkboxGroups = formBubble.querySelectorAll('.ai-esc-checkboxes');
+      checkboxGroups.forEach(function (group) {
+        var name = group.getAttribute('data-name');
+        var checked = [];
+        group.querySelectorAll('input[type="checkbox"]:checked').forEach(function (cb) {
+          checked.push(cb.value);
+        });
+        contactData[name] = checked;
+        if (checked.length === 0 && group.getAttribute('data-required') === '1') {
+          group.style.borderColor = '#dc2626';
           hasRequired = false;
         } else {
-          inp.style.borderColor = '';
+          group.style.borderColor = '';
         }
       });
 
@@ -498,6 +532,11 @@
       '.ai-esc-field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 2px; color: ' + text + '; }' +
       '.ai-esc-input { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; box-sizing: border-box; background: ' + bg + '; color: ' + text + '; }' +
       '.ai-esc-input:focus { border-color: ' + primary + '; box-shadow: 0 0 0 2px ' + primary + '33; }' +
+      'select.ai-esc-input { appearance: auto; cursor: pointer; }' +
+      'textarea.ai-esc-input { resize: vertical; min-height: 60px; }' +
+      '.ai-esc-checkboxes { display: flex; flex-direction: column; gap: 4px; padding: 4px 0; }' +
+      '.ai-esc-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; color: ' + text + '; }' +
+      '.ai-esc-checkbox-label input { width: 16px; height: 16px; cursor: pointer; }' +
       '.ai-esc-submit { width: 100%; padding: 10px; border: none; border-radius: 8px; background: ' + primary + '; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; font-family: inherit; }' +
       '.ai-esc-submit:hover { opacity: 0.9; }' +
       '.ai-esc-submit:disabled { opacity: 0.6; cursor: not-allowed; }' +
