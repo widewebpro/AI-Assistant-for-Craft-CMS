@@ -17,6 +17,7 @@ use widewebpro\aiagent\services\EmbeddingService;
 use widewebpro\aiagent\services\KnowledgeBaseService;
 use widewebpro\aiagent\services\ProviderService;
 use widewebpro\aiagent\services\ToolRegistry;
+use widewebpro\aiagent\services\WebhookService;
 use widewebpro\aiagent\services\WidgetService;
 use yii\base\Event;
 
@@ -45,6 +46,7 @@ class Plugin extends BasePlugin
                 'knowledgeBase' => KnowledgeBaseService::class,
                 'provider' => ProviderService::class,
                 'tools' => ToolRegistry::class,
+                'webhook' => WebhookService::class,
                 'widget' => WidgetService::class,
             ],
         ];

@@ -267,6 +267,22 @@ class ChatApiController extends Controller
 
         $plugin->chat->addMessage($conversation->id, 'system', 'Escalation form submitted: ' . json_encode($contactData));
 
+        // Fire webhook actions
+        $conversationMeta = [
+            'conversationId' => $conversation->id,
+            'sessionId' => $sessionId,
+            'pageUrl' => $conversation->pageUrl ?? '',
+            'ipAddress' => $conversation->ipAddress ?? '',
+            'escalatedAt' => date('c'),
+        ];
+        $webhookResults = $plugin->webhook->fireActions($contactData, $conversationMeta);
+
+        if (!empty($webhookResults)) {
+            $metadata['webhookResults'] = $webhookResults;
+            $conversation->metadata = json_encode($metadata);
+            $conversation->save(false);
+        }
+
         Craft::info("Escalation form submitted for conversation {$conversation->id}", 'ai-agent');
 
         return $this->asJson([

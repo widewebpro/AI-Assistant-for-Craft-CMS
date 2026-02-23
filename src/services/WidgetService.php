@@ -43,13 +43,20 @@ class WidgetService extends Component
             'escalation' => [
                 'enabled' => $settings->escalationEnabled,
                 'message' => $settings->escalationMessage,
-                'fields' => [
-                    'name' => $settings->escalationFieldName,
-                    'email' => $settings->escalationFieldEmail,
-                    'phone' => $settings->escalationFieldPhone,
-                ],
-                'customQuestions' => array_filter(array_map('trim', explode("\n", $settings->escalationCustomQuestions))),
                 'confirmation' => $settings->escalationConfirmation,
+                'fields' => array_map(function ($f) {
+                    $field = [
+                        'label' => $f['label'] ?? '',
+                        'handle' => $f['handle'] ?? '',
+                        'type' => $f['type'] ?? 'text',
+                        'required' => !empty($f['required']),
+                        'placeholder' => $f['placeholder'] ?? '',
+                    ];
+                    if (in_array($f['type'] ?? '', ['select', 'checkbox']) && !empty($f['options'])) {
+                        $field['options'] = array_map('trim', explode(',', $f['options']));
+                    }
+                    return $field;
+                }, $settings->escalationFields),
             ],
         ];
     }
