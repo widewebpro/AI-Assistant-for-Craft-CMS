@@ -10,6 +10,16 @@ use yii\web\UploadedFile;
 
 class AppearanceController extends Controller
 {
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        $this->requirePermission('aiAgent:manageSettings');
+        return true;
+    }
+
     public function actionIndex(): Response
     {
         return $this->renderTemplate('ai-agent/settings/appearance', [

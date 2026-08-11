@@ -9,6 +9,16 @@ use yii\web\Response;
 
 class EscalationController extends Controller
 {
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        $this->requirePermission('aiAgent:manageSettings');
+        return true;
+    }
+
     public function actionIndex(): Response
     {
         $settings = Plugin::getInstance()->getSettings();

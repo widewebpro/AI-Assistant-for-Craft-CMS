@@ -10,6 +10,16 @@ use yii\web\UploadedFile;
 
 class KnowledgeBaseController extends Controller
 {
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        $this->requirePermission('aiAgent:manageKnowledgeBase');
+        return true;
+    }
+
     public function actionIndex(): Response
     {
         return $this->renderTemplate('ai-agent/settings/knowledge-base', [

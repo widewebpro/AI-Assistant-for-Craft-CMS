@@ -11,6 +11,16 @@ use yii\web\Response;
 
 class PagesController extends Controller
 {
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        $this->requirePermission('aiAgent:manageSettings');
+        return true;
+    }
+
     public function actionIndex(): Response
     {
         $rules = (new \yii\db\Query())

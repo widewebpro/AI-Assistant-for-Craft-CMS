@@ -11,6 +11,16 @@ use yii\web\Response;
 
 class DefaultController extends Controller
 {
+    public function beforeAction($action): bool
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        $this->requirePermission('aiAgent:viewConversations');
+        return true;
+    }
+
     public function actionIndex(): Response
     {
         $totalConversations = ConversationRecord::find()->count();

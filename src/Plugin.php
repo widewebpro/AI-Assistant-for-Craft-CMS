@@ -7,6 +7,8 @@ use craft\base\Plugin as BasePlugin;
 use craft\base\Model;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterTemplateRootsEvent;
+use craft\events\RegisterUserPermissionsEvent;
+use craft\services\UserPermissions;
 use craft\web\UrlManager;
 use craft\web\View;
 use craft\web\twig\variables\CraftVariable;
@@ -59,18 +61,32 @@ class Plugin extends BasePlugin
         $this->_registerCpRoutes();
         $this->_registerSiteRoutes();
         $this->_registerFrontendWidget();
+        $this->_registerPermissions();
     }
 
     public function getCpNavItem(): ?array
     {
+        $user = Craft::$app->getUser();
+
+        $subnav = [];
+        if ($user->checkPermission('aiAgent:viewConversations')) {
+            $subnav['dashboard'] = ['label' => 'Dashboard', 'url' => 'ai-agent'];
+            $subnav['conversations'] = ['label' => 'Conversations', 'url' => 'ai-agent/conversations'];
+        }
+        if ($user->checkPermission('aiAgent:manageSettings')) {
+            $subnav['settings'] = ['label' => 'Settings', 'url' => 'ai-agent/settings'];
+        } elseif ($user->checkPermission('aiAgent:manageKnowledgeBase')) {
+            $subnav['settings'] = ['label' => 'Settings', 'url' => 'ai-agent/settings/knowledge-base'];
+        }
+
+        if (empty($subnav)) {
+            return null;
+        }
+
         $nav = parent::getCpNavItem();
         $nav['label'] = $this->getSettings()->agentName ?: 'AI Assistant';
-
-        $nav['subnav'] = [
-            'dashboard' => ['label' => 'Dashboard', 'url' => 'ai-agent'],
-            'conversations' => ['label' => 'Conversations', 'url' => 'ai-agent/conversations'],
-            'settings' => ['label' => 'Settings', 'url' => 'ai-agent/settings'],
-        ];
+        $nav['subnav'] = $subnav;
+        $nav['url'] = reset($subnav)['url'];
 
         return $nav;
     }
@@ -106,6 +122,31 @@ class Plugin extends BasePlugin
                 $event->rules['ai-agent/settings/restrictions/save'] = 'ai-agent/restrictions/save';
                 $event->rules['ai-agent/settings/escalation'] = 'ai-agent/escalation/index';
                 $event->rules['ai-agent/settings/escalation/save'] = 'ai-agent/escalation/save';
+            }
+        );
+    }
+
+    private function _registerPermissions(): void
+    {
+        Event::on(
+            UserPermissions::class,
+            UserPermissions::EVENT_REGISTER_PERMISSIONS,
+            function (RegisterUserPermissionsEvent $event) {
+                $event->permissions[] = [
+                    'heading' => 'AI Assistant',
+                    'permissions' => [
+                        'aiAgent:viewConversations' => [
+                            'label' => 'View dashboard and conversations',
+                        ],
+                        'aiAgent:manageKnowledgeBase' => [
+                            'label' => 'Manage the knowledge base',
+                        ],
+                        'aiAgent:manageSettings' => [
+                            'label' => 'Manage settings',
+                            'warning' => 'Grants access to the AI provider API key.',
+                        ],
+                    ],
+                ];
             }
         );
     }

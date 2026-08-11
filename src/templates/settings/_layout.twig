@@ -2,14 +2,25 @@
 {% set selectedSubnavItem = "settings" %}
 {% set selectedTab = settingsTab ?? "general" %}
 
-{% set tabs = {
-    'general': { label: 'General', url: cpUrl('ai-agent/settings') },
-    'appearance': { label: 'Appearance', url: cpUrl('ai-agent/settings/appearance') },
-    'knowledge-base': { label: 'Knowledge Base', url: cpUrl('ai-agent/settings/knowledge-base') },
-    'pages': { label: 'Pages', url: cpUrl('ai-agent/settings/pages') },
-    'restrictions': { label: 'Restrictions', url: cpUrl('ai-agent/settings/restrictions') },
-    'escalation': { label: 'Escalation', url: cpUrl('ai-agent/settings/escalation') },
-} %}
+{% set tabs = {} %}
+{% if currentUser.can('aiAgent:manageSettings') %}
+    {% set tabs = tabs|merge({
+        'general': { label: 'General', url: cpUrl('ai-agent/settings') },
+        'appearance': { label: 'Appearance', url: cpUrl('ai-agent/settings/appearance') },
+    }) %}
+{% endif %}
+{% if currentUser.can('aiAgent:manageKnowledgeBase') %}
+    {% set tabs = tabs|merge({
+        'knowledge-base': { label: 'Knowledge Base', url: cpUrl('ai-agent/settings/knowledge-base') },
+    }) %}
+{% endif %}
+{% if currentUser.can('aiAgent:manageSettings') %}
+    {% set tabs = tabs|merge({
+        'pages': { label: 'Pages', url: cpUrl('ai-agent/settings/pages') },
+        'restrictions': { label: 'Restrictions', url: cpUrl('ai-agent/settings/restrictions') },
+        'escalation': { label: 'Escalation', url: cpUrl('ai-agent/settings/escalation') },
+    }) %}
+{% endif %}
 
 {% block content %}
     {% block settingsContent %}{% endblock %}
