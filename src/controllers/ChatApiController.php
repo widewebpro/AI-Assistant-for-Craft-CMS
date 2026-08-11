@@ -38,16 +38,18 @@ class ChatApiController extends Controller
 
         if (empty($sessionId)) {
             $sessionId = \craft\helpers\StringHelper::UUID();
+        } elseif (!$plugin->chat->isValidSessionId($sessionId)) {
+            throw new BadRequestHttpException('Invalid session ID.');
         }
 
         $ip = $request->getUserIP();
-        $conversation = $plugin->chat->getOrCreateConversation($sessionId, $pageUrl, $ip);
 
-        // Rate limiting
-        $recentCount = $plugin->chat->getRecentMessageCount($sessionId);
-        if ($recentCount >= $settings->rateLimitPerMinute) {
-            throw new TooManyRequestsHttpException('Rate limit exceeded. Please wait a moment.');
+        // Before the conversation/provider, so a blocked request is free.
+        if ($limitError = $this->_rateLimitError($sessionId, $ip)) {
+            throw new TooManyRequestsHttpException($limitError);
         }
+
+        $conversation = $plugin->chat->getOrCreateConversation($sessionId, $pageUrl, $ip);
 
         // Max messages check
         $totalMessages = $plugin->chat->getMessageCount($conversation->id);
@@ -137,16 +139,22 @@ class ChatApiController extends Controller
             exit;
         }
 
-        $ip = $request->getUserIP();
-        $conversation = $plugin->chat->getOrCreateConversation($sessionId, $pageUrl, $ip);
-
-        // Rate limiting
-        $recentCount = $plugin->chat->getRecentMessageCount($sessionId);
-        if ($recentCount >= $settings->rateLimitPerMinute) {
-            $this->_sendSSE('error', ['message' => 'Rate limit exceeded.']);
+        if (!$plugin->chat->isValidSessionId($sessionId)) {
+            $this->_sendSSE('error', ['message' => 'Invalid session ID.']);
             $this->_sendSSE('done', []);
             exit;
         }
+
+        $ip = $request->getUserIP();
+
+        // Before the conversation/provider, so a blocked request is free.
+        if ($limitError = $this->_rateLimitError($sessionId, $ip)) {
+            $this->_sendSSE('error', ['message' => $limitError]);
+            $this->_sendSSE('done', []);
+            exit;
+        }
+
+        $conversation = $plugin->chat->getOrCreateConversation($sessionId, $pageUrl, $ip);
 
         // Save user message
         $plugin->chat->addMessage($conversation->id, 'user', $message);
@@ -247,7 +255,7 @@ class ChatApiController extends Controller
         $sessionId = $request->getBodyParam('sessionId', '');
         $contactData = $request->getBodyParam('contact', []);
 
-        if (empty($sessionId)) {
+        if (empty($sessionId) || !$plugin->chat->isValidSessionId($sessionId)) {
             return $this->asJson(['error' => 'Session ID required.', 'status' => 'error']);
         }
 
@@ -289,6 +297,29 @@ class ChatApiController extends Controller
             'status' => 'ok',
             'confirmation' => $settings->escalationConfirmation,
         ]);
+    }
+
+    /** Error message if any limit (session / per-IP / daily) is hit, else null. Per-IP and daily are off at 0. */
+    private function _rateLimitError(string $sessionId, string $ip): ?string
+    {
+        $chat = Plugin::getInstance()->chat;
+        $settings = Plugin::getInstance()->getSettings();
+
+        if ($chat->getRecentMessageCount($sessionId) >= $settings->rateLimitPerMinute) {
+            return 'Rate limit exceeded. Please wait a moment.';
+        }
+
+        $ipLimit = (int)$settings->rateLimitPerMinutePerIp;
+        if ($ipLimit > 0 && $chat->getRecentMessageCountByIp($ip) >= $ipLimit) {
+            return 'Rate limit exceeded. Please wait a moment.';
+        }
+
+        $dailyLimit = (int)$settings->dailyMessageLimit;
+        if ($dailyLimit > 0 && $chat->getDailyMessageCount() >= $dailyLimit) {
+            return 'The assistant is temporarily unavailable due to high demand. Please try again later.';
+        }
+
+        return null;
     }
 
     private function _sendSSE(string $event, array $data): void

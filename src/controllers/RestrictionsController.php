@@ -41,6 +41,8 @@ class RestrictionsController extends Controller
         $settings->errorMessage = $request->getBodyParam('errorMessage', '');
         $settings->maxMessagesPerConversation = (int)$request->getBodyParam('maxMessagesPerConversation', 50);
         $settings->rateLimitPerMinute = (int)$request->getBodyParam('rateLimitPerMinute', 10);
+        $settings->rateLimitPerMinutePerIp = (int)$request->getBodyParam('rateLimitPerMinutePerIp', 30);
+        $settings->dailyMessageLimit = (int)$request->getBodyParam('dailyMessageLimit', 0);
 
         if (!Craft::$app->getPlugins()->savePluginSettings($plugin, $settings->toArray())) {
             Craft::$app->getSession()->setError('Could not save restriction settings.');

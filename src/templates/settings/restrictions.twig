@@ -80,13 +80,36 @@
 
         {{ forms.textField({
             label: "Rate Limit (messages per minute)",
-            instructions: "Maximum messages a single user can send per minute.",
+            instructions: "Maximum messages a single session can send per minute.",
             id: "rateLimitPerMinute",
             name: "rateLimitPerMinute",
             value: settings.rateLimitPerMinute,
             type: "number",
             min: 1,
             max: 60,
+            size: 10,
+        }) }}
+
+        {{ forms.textField({
+            label: "Rate Limit per IP (messages per minute)",
+            instructions: "Maximum messages from one IP address per minute, counted across all its sessions. Catches abuse that rotates the session ID to dodge the per-session limit. Set to 0 to disable.",
+            id: "rateLimitPerMinutePerIp",
+            name: "rateLimitPerMinutePerIp",
+            value: settings.rateLimitPerMinutePerIp,
+            type: "number",
+            min: 0,
+            max: 600,
+            size: 10,
+        }) }}
+
+        {{ forms.textField({
+            label: "Daily Message Limit (site-wide)",
+            instructions: "Hard cap on total user messages per day across the whole site, as a runaway-cost safeguard. Set to 0 to disable.",
+            id: "dailyMessageLimit",
+            name: "dailyMessageLimit",
+            value: settings.dailyMessageLimit,
+            type: "number",
+            min: 0,
             size: 10,
         }) }}
     </div>

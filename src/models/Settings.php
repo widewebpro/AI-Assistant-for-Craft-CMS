@@ -38,6 +38,8 @@ class Settings extends Model
     public string $errorMessage = "I'm sorry, something went wrong. Please try again later.";
     public int $maxMessagesPerConversation = 50;
     public int $rateLimitPerMinute = 10;
+    public int $rateLimitPerMinutePerIp = 30;
+    public int $dailyMessageLimit = 0;
 
     // Escalation
     public bool $escalationEnabled = true;
@@ -107,6 +109,8 @@ class Settings extends Model
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
             [['maxMessagesPerConversation'], 'integer', 'min' => 1, 'max' => 200],
             [['rateLimitPerMinute'], 'integer', 'min' => 1, 'max' => 60],
+            [['rateLimitPerMinutePerIp'], 'integer', 'min' => 0, 'max' => 600],
+            [['dailyMessageLimit'], 'integer', 'min' => 0, 'max' => 1000000],
             [['agentName', 'primaryColor', 'welcomeMessage', 'fallbackMessage', 'errorMessage'], 'required'],
         ];
     }
