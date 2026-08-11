@@ -426,17 +426,60 @@
     text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
     // Inline code
     text = text.replace(/`(.*?)`/g, '<code>$1</code>');
-    // Links
-    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // Links: label/URL already escaped (no breakout); reject unsafe schemes.
+    text = text.replace(
+      /\[([^\]]+)\]\(([^)]+)\)/g,
+      function (match, label, url) {
+        var href = safeUrl(url);
+        if (href === null) {
+          return match; // not a safe URL -> leave [label](url) as text
+        }
+        return (
+          '<a href="' +
+          href +
+          '" target="_blank" rel="noopener noreferrer">' +
+          label +
+          '</a>'
+        );
+      },
+    );
     // Line breaks
     text = text.replace(/\n/g, '<br>');
     return text;
   }
 
+  // Returns the (escaped) URL if it's http/https/mailto/relative, else null.
+  function safeUrl(url) {
+    var decoded = url
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&');
+    // Real URLs percent-encode these; raw = breakout attempt.
+    if (/[\s"'<>`]/.test(decoded)) {
+      return null;
+    }
+    var lower = decoded.toLowerCase();
+    if (/^(https?:|mailto:)/.test(lower)) {
+      return url;
+    }
+    if (/^[a-z][a-z0-9.+-]*:/.test(lower)) {
+      return null; // other explicit scheme (javascript:, data:, ...) -> reject
+    }
+    return url; // no scheme = relative -> safe
+  }
+
   function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
+    if (str == null) {
+      return '';
+    }
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function matchGlob(pattern, path) {
