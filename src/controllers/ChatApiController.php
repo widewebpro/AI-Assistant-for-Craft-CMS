@@ -45,21 +45,18 @@ class ChatApiController extends Controller
         $ip = $request->getUserIP();
 
         // Before the conversation/provider, so a blocked request is free.
-        if ($limitError = $this->_rateLimitError($sessionId, $ip)) {
-            throw new TooManyRequestsHttpException($limitError);
+        if ($limit = $this->_limitError($sessionId, $ip)) {
+            if ($limit['status'] === 'closed') {
+                return $this->asJson([
+                    'text' => $limit['message'],
+                    'sessionId' => $sessionId,
+                    'status' => 'closed',
+                ]);
+            }
+            throw new TooManyRequestsHttpException($limit['message']);
         }
 
         $conversation = $plugin->chat->getOrCreateConversation($sessionId, $pageUrl, $ip);
-
-        // Max messages check
-        $totalMessages = $plugin->chat->getMessageCount($conversation->id);
-        if ($totalMessages >= $settings->maxMessagesPerConversation) {
-            return $this->asJson([
-                'text' => 'This conversation has reached its message limit. Please start a new conversation.',
-                'sessionId' => $sessionId,
-                'status' => 'closed',
-            ]);
-        }
 
         $history = $plugin->chat->getConversationHistory($conversation->id);
 
@@ -146,8 +143,8 @@ class ChatApiController extends Controller
         $ip = $request->getUserIP();
 
         // Before the conversation/provider, so a blocked request is free.
-        if ($limitError = $this->_rateLimitError($sessionId, $ip)) {
-            $this->_sendSSE('error', ['message' => $limitError]);
+        if ($limit = $this->_limitError($sessionId, $ip)) {
+            $this->_sendSSE('error', ['message' => $limit['message'], 'status' => $limit['status']]);
             $this->_sendSSE('done', []);
             exit;
         }
@@ -296,24 +293,34 @@ class ChatApiController extends Controller
         ]);
     }
 
-    /** Error message if any limit (session / per-IP / daily) is hit, else null. Per-IP and daily are off at 0. */
-    private function _rateLimitError(string $sessionId, string $ip): ?string
+    /**
+     * First tripped limit as ['message' => ..., 'status' => 'error'|'closed'], else null.
+     * Shared by send and stream. Per-IP and daily limits are off at 0.
+     */
+    private function _limitError(string $sessionId, string $ip): ?array
     {
         $chat = Plugin::getInstance()->chat;
         $settings = Plugin::getInstance()->getSettings();
 
         if ($chat->getRecentMessageCount($sessionId) >= $settings->rateLimitPerMinute) {
-            return 'Rate limit exceeded. Please wait a moment.';
+            return ['message' => 'Rate limit exceeded. Please wait a moment.', 'status' => 'error'];
         }
 
         $ipLimit = (int)$settings->rateLimitPerMinutePerIp;
         if ($ipLimit > 0 && $chat->getRecentMessageCountByIp($ip) >= $ipLimit) {
-            return 'Rate limit exceeded. Please wait a moment.';
+            return ['message' => 'Rate limit exceeded. Please wait a moment.', 'status' => 'error'];
         }
 
         $dailyLimit = (int)$settings->dailyMessageLimit;
         if ($dailyLimit > 0 && $chat->getDailyMessageCount() >= $dailyLimit) {
-            return 'The assistant is temporarily unavailable due to high demand. Please try again later.';
+            return ['message' => 'The assistant is temporarily unavailable due to high demand. Please try again later.', 'status' => 'error'];
+        }
+
+        $conversation = \widewebpro\aiagent\records\ConversationRecord::find()
+            ->where(['sessionId' => $sessionId])
+            ->one();
+        if ($conversation && $chat->getMessageCount($conversation->id) >= $settings->maxMessagesPerConversation) {
+            return ['message' => 'This conversation has reached its message limit. Please start a new conversation.', 'status' => 'closed'];
         }
 
         return null;
