@@ -52,7 +52,7 @@ class ChatService extends Component
         $messages = MessageRecord::find()
             ->where(['conversationId' => $conversationId])
             ->andWhere(['in', 'role', ['user', 'assistant']])
-            ->orderBy(['dateCreated' => SORT_DESC])
+            ->orderBy(['dateCreated' => SORT_DESC, 'id' => SORT_DESC])
             ->limit($limit)
             ->all();
 

@@ -61,11 +61,9 @@ class ChatApiController extends Controller
             ]);
         }
 
-        // Save user message
-        $plugin->chat->addMessage($conversation->id, 'user', $message);
-
-        // Get conversation history
         $history = $plugin->chat->getConversationHistory($conversation->id);
+
+        $plugin->chat->addMessage($conversation->id, 'user', $message);
 
         try {
             $result = $plugin->ai->processMessage($message, $history, $pageUrl);
@@ -156,9 +154,8 @@ class ChatApiController extends Controller
 
         $conversation = $plugin->chat->getOrCreateConversation($sessionId, $pageUrl, $ip);
 
-        // Save user message
-        $plugin->chat->addMessage($conversation->id, 'user', $message);
         $history = $plugin->chat->getConversationHistory($conversation->id);
+        $plugin->chat->addMessage($conversation->id, 'user', $message);
 
         try {
             $fullText = '';
