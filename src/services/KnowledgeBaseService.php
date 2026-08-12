@@ -4,6 +4,7 @@ namespace widewebpro\aiagent\services;
 
 use Craft;
 use craft\base\Component;
+use craft\helpers\FileHelper;
 use craft\helpers\StringHelper;
 use widewebpro\aiagent\jobs\ProcessKnowledgeFileJob;
 use widewebpro\aiagent\Plugin;
@@ -17,6 +18,13 @@ class KnowledgeBaseService extends Component
     private const CHUNK_SIZE = 500;     // ~500 tokens target
     private const CHUNK_OVERLAP = 50;   // ~50 tokens overlap
     private const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+    private const ALLOWED_TYPES = [
+        'pdf' => ['application/pdf'],
+        'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        'txt' => ['text/plain'],
+        'md' => ['text/plain', 'text/markdown', 'text/x-markdown', 'text/html'],
+    ];
 
     public function getStoragePath(): string
     {
@@ -32,11 +40,9 @@ class KnowledgeBaseService extends Component
      */
     public function processUploadedFile(\yii\web\UploadedFile $file): KnowledgeFileRecord
     {
-        if ($file->size > self::MAX_FILE_SIZE) {
-            throw new \RuntimeException('File exceeds maximum size of 10MB.');
-        }
+        $realMime = $this->_validateUpload($file);
 
-        $filename = StringHelper::UUID() . '.' . $file->getExtension();
+        $filename = StringHelper::UUID() . '.' . strtolower($file->getExtension());
         $storagePath = $this->getStoragePath();
         $filePath = $storagePath . '/' . $filename;
 
@@ -45,7 +51,7 @@ class KnowledgeBaseService extends Component
         $record = new KnowledgeFileRecord();
         $record->filename = $filename;
         $record->originalName = $file->name;
-        $record->mimeType = $file->type;
+        $record->mimeType = $realMime;
         $record->fileSize = $file->size;
         $record->status = 'processing';
         $record->uid = StringHelper::UUID();
@@ -54,6 +60,29 @@ class KnowledgeBaseService extends Component
         $this->queueProcessing($record);
 
         return $record;
+    }
+
+    private function _validateUpload(\yii\web\UploadedFile $file): string
+    {
+        if ($file->getHasError()) {
+            throw new \RuntimeException("Upload of \"{$file->name}\" failed (error {$file->error}).");
+        }
+
+        if ($file->size > self::MAX_FILE_SIZE) {
+            throw new \RuntimeException('File exceeds maximum size of 10MB.');
+        }
+
+        $ext = strtolower($file->getExtension());
+        if (!isset(self::ALLOWED_TYPES[$ext])) {
+            throw new \RuntimeException("\"{$file->name}\": .{$ext} is not supported (allowed: pdf, docx, txt, md).");
+        }
+
+        $realMime = FileHelper::getMimeType($file->tempName, null, false);
+        if (!in_array($realMime, self::ALLOWED_TYPES[$ext], true)) {
+            throw new \RuntimeException("\"{$file->name}\" does not look like a .{$ext} file (detected: " . ($realMime ?? 'unknown') . ').');
+        }
+
+        return $realMime;
     }
 
     public function queueProcessing(KnowledgeFileRecord $record): void
