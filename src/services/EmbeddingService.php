@@ -52,10 +52,10 @@ class EmbeddingService extends Component
      */
     public function search(string $query, int $limit = 5): array
     {
-        // Try embedding search first
+        // Try embedding search first.
         try {
             $results = $this->_embeddingSearch($query, $limit);
-            if (!empty($results)) {
+            if ($results !== null) {
                 return $results;
             }
         } catch (\Throwable $e) {
@@ -66,16 +66,20 @@ class EmbeddingService extends Component
         return $this->_keywordSearch($query, $limit);
     }
 
-    private function _embeddingSearch(string $query, int $limit): array
+    private function _embeddingSearch(string $query, int $limit): ?array
     {
-        $provider = Plugin::getInstance()->provider;
-        $settings = Plugin::getInstance()->getSettings();
-        $queryEmbedding = $provider->embed($query);
+        $queryEmbedding = Plugin::getInstance()->provider->embed($query);
+        return $this->_searchByVector($queryEmbedding, $limit);
+    }
 
+    private function _searchByVector(array $queryEmbedding, int $limit): ?array
+    {
         if (empty($queryEmbedding)) {
-            return [];
+            return null;
         }
-    
+
+        $settings = Plugin::getInstance()->getSettings();
+
         $rows = (new \yii\db\Query())
             ->select(['e.chunkId', 'e.embedding', 'c.content', 'c.fileId', 'c.metadata', 'f.originalName as filename'])
             ->from('{{%aiagent_embeddings}} e')
@@ -85,14 +89,20 @@ class EmbeddingService extends Component
             ->all();
 
         if (empty($rows)) {
-            return [];
+            return null;
         }
 
-        // Compute cosine similarity
+        $threshold = (float)$settings->searchMinScore;
+
+        // Compute cosine similarity, keeping only chunks at or above the threshold.
         $scored = [];
         foreach ($rows as $row) {
             $storedEmbedding = array_values(unpack('f*', $row['embedding']));
             $score = $this->_cosineSimilarity($queryEmbedding, $storedEmbedding);
+
+            if ($score < $threshold) {
+                continue;
+            }
 
             $scored[] = [
                 'content' => $row['content'],

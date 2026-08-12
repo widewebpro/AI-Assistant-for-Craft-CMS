@@ -113,4 +113,21 @@
             size: 10,
         }) }}
     </div>
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Knowledge Base Search</h2>
+
+        {{ forms.textField({
+            label: "Minimum Relevance Score",
+            instructions: "Cosine-similarity threshold (0–1) a knowledge base chunk must reach to be used as context. Chunks below this are dropped; if none qualify, the agent is told nothing relevant was found instead of being fed low-relevance noise. 0 disables the filter. Typical: 0.25–0.35.",
+            id: "searchMinScore",
+            name: "searchMinScore",
+            value: settings.searchMinScore,
+            type: "number",
+            min: 0,
+            max: 1,
+            step: 0.05,
+            size: 10,
+        }) }}
+    </div>
 {% endblock %}

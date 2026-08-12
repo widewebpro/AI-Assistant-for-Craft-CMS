@@ -67,10 +67,66 @@ class ConversationsController extends Controller
             ->orderBy(['dateCreated' => SORT_ASC])
             ->all();
 
+        $searchHits = [];
+        foreach ($messages as $msg) {
+            if ($msg->toolResults) {
+                $hits = $this->_extractSearchHits($msg->toolResults);
+                if (!empty($hits)) {
+                    $searchHits[$msg->id] = $hits;
+                }
+            }
+        }
+
         return $this->renderTemplate('ai-agent/conversations/view', [
             'plugin' => Plugin::getInstance(),
             'conversation' => $conversation,
             'messages' => $messages,
+            'searchHits' => $searchHits,
         ]);
+    }
+
+    private function _extractSearchHits(mixed $raw): array
+    {
+        $hits = [];
+        $this->_walkForHits($this->_deepJsonDecode($raw), $hits);
+        return $hits;
+    }
+
+    private function _deepJsonDecode(mixed $value): mixed
+    {
+        for ($i = 0; $i < 6 && is_string($value); $i++) {
+            $trimmed = ltrim($value);
+            if ($trimmed === '' || !in_array($trimmed[0], ['[', '{', '"'], true)) {
+                break;
+            }
+            $decoded = json_decode($value, true);
+            if ($decoded === null) {
+                break;
+            }
+            $value = $decoded;
+        }
+        return $value;
+    }
+
+    private function _walkForHits(mixed $node, array &$hits): void
+    {
+        if (is_string($node)) {
+            $node = $this->_deepJsonDecode($node);
+        }
+        if (!is_array($node)) {
+            return;
+        }
+
+        if (array_key_exists('relevance', $node) || (array_key_exists('score', $node) && (isset($node['source']) || isset($node['filename'])))) {
+            $hits[] = [
+                'source' => $node['source'] ?? $node['filename'] ?? '—',
+                'score' => $node['relevance'] ?? $node['score'] ?? null,
+            ];
+            return;
+        }
+
+        foreach ($node as $child) {
+            $this->_walkForHits($child, $hits);
+        }
     }
 }

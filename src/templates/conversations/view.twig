@@ -51,6 +51,18 @@
                     <pre style="font-size: 12px; margin-top: 4px; white-space: pre-wrap;">{{ msg.toolCalls | json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
                 </details>
             {% endif %}
+            {% if searchHits[msg.id] is defined %}
+                <div style="margin-top: 8px;">
+                    <div style="font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Knowledge base hits</div>
+                    {% for hit in searchHits[msg.id] %}
+                        {% set s = hit.score is not null ? hit.score : 0 %}
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 2px 0;">
+                            <span style="display: inline-block; min-width: 52px; text-align: center; padding: 1px 6px; border-radius: 10px; font-family: monospace; color: #fff; background: {{ s >= 0.45 ? '#16a34a' : (s >= 0.3 ? '#d97706' : '#dc2626') }};">{{ s | number_format(3) }}</span>
+                            <span>{{ hit.source }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
             {% if msg.toolResults %}
                 <details style="margin-top: 8px;">
                     <summary style="cursor: pointer; font-size: 12px; color: #6b7280;">Tool Results</summary>

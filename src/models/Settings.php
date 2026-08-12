@@ -41,6 +41,7 @@ class Settings extends Model
     public int $rateLimitPerMinute = 10;
     public int $rateLimitPerMinutePerIp = 30;
     public int $dailyMessageLimit = 0;
+    public float $searchMinScore = 0.3;
 
     // Escalation
     public bool $escalationEnabled = true;
@@ -112,6 +113,7 @@ class Settings extends Model
             [['rateLimitPerMinute'], 'integer', 'min' => 1, 'max' => 60],
             [['rateLimitPerMinutePerIp'], 'integer', 'min' => 0, 'max' => 600],
             [['dailyMessageLimit'], 'integer', 'min' => 0, 'max' => 1000000],
+            [['searchMinScore'], 'number', 'min' => 0, 'max' => 1],
             [['agentName', 'primaryColor', 'welcomeMessage', 'fallbackMessage', 'errorMessage'], 'required'],
         ];
     }
