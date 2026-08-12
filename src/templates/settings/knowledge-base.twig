@@ -6,12 +6,12 @@
 {% if not embeddingReady %}
 <div class="pane" style="margin-bottom: 24px; border-left: 3px solid #dc2626;">
     <h2 style="color: #dc2626;">No embedding API key</h2>
-    <p class="light">Embeddings always use OpenAI, even when the chat provider is Anthropic. Without an OpenAI key, uploads will fail and semantic search cannot run. Set one under <a href="{{ cpUrl('ai-agent/settings') }}">Settings → General → Embedding API Key</a>.</p>
+    <p class="light">Embeddings always use OpenAI, even when the chat provider is Anthropic. Without an OpenAI key, file processing will fail and semantic search cannot run. Set one under <a href="{{ cpUrl('ai-agent/settings') }}">Settings → General → Embedding API Key</a>.</p>
 </div>
 {% endif %}
 <div class="pane" style="margin-bottom: 24px;">
     <h2>Upload Files</h2>
-    <p class="light">Upload documents to build your AI agent's knowledge base. Supported formats: PDF, TXT, Markdown, DOCX.</p>
+    <p class="light">Upload documents to build your AI agent's knowledge base. Supported formats: PDF, TXT, Markdown, DOCX. Files are processed in the background via the queue.</p>
 
     <form method="post" enctype="multipart/form-data" accept-charset="UTF-8" id="kb-upload-form">
         {{ csrfInput() }}
@@ -32,7 +32,6 @@
 
 <div class="pane">
     <h2>Knowledge Base Files</h2>
-    {% set files = craft.app.db.createCommand("SELECT * FROM {{%aiagent_knowledge_files}} ORDER BY dateCreated DESC").queryAll() %}
 
     {% if files | length %}
     <table class="data fullwidth">
@@ -55,8 +54,13 @@
                 <td>{{ (file.fileSize / 1024) | round(1) }} KB</td>
                 <td>{{ file.chunkCount }}</td>
                 <td>
-                    <span class="status {{ file.status == 'ready' ? 'live' : (file.status == 'error' ? 'expired' : 'pending') }}"></span>
-                    {{ file.status | capitalize }}
+                    {% if file.isStuck %}
+                        <span class="status expired"></span> Stuck
+                        <span class="info">Still “processing” since {{ file.dateUpdated }} — the worker likely died before finishing. Its chunks are invisible to search. Use Reprocess.</span>
+                    {% else %}
+                        <span class="status {{ file.status == 'ready' ? 'live' : (file.status == 'error' ? 'expired' : 'pending') }}"></span>
+                        {{ file.status | capitalize }}
+                    {% endif %}
                 </td>
                 <td>{{ file.dateCreated }}</td>
                 <td>

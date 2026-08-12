@@ -3,8 +3,11 @@
 namespace widewebpro\aiagent\controllers;
 
 use Craft;
+use craft\db\Query;
 use craft\web\Controller;
 use widewebpro\aiagent\Plugin;
+use widewebpro\aiagent\records\KnowledgeFileRecord;
+use widewebpro\aiagent\services\KnowledgeBaseService;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
@@ -25,7 +28,26 @@ class KnowledgeBaseController extends Controller
         return $this->renderTemplate('ai-agent/settings/knowledge-base', [
             'plugin' => Plugin::getInstance(),
             'embeddingReady' => Plugin::getInstance()->provider->hasEmbeddingKey(),
+            'files' => $this->_fileRows(),
         ]);
+    }
+
+    /** File rows for the CP list; 'processing' older than STUCK_AFTER_MINUTES is flagged stuck. */
+    private function _fileRows(): array
+    {
+        $stuckBefore = (new \DateTime('-' . KnowledgeBaseService::STUCK_AFTER_MINUTES . ' minutes'))
+            ->format('Y-m-d H:i:s');
+
+        $rows = (new Query())
+            ->from('{{%aiagent_knowledge_files}}')
+            ->orderBy(['dateCreated' => SORT_DESC])
+            ->all();
+
+        foreach ($rows as &$row) {
+            $row['isStuck'] = $row['status'] === 'processing' && $row['dateUpdated'] < $stuckBefore;
+        }
+
+        return $rows;
     }
 
     public function actionUpload(): ?Response
@@ -40,20 +62,20 @@ class KnowledgeBaseController extends Controller
         }
 
         $kb = Plugin::getInstance()->knowledgeBase;
-        $processed = 0;
+        $queued = 0;
         $errors = [];
 
         foreach ($files as $file) {
             try {
                 $kb->processUploadedFile($file);
-                $processed++;
+                $queued++;
             } catch (\Throwable $e) {
                 $errors[] = $file->name . ': ' . $e->getMessage();
             }
         }
 
-        if ($processed > 0) {
-            Craft::$app->getSession()->setNotice("{$processed} file(s) processed successfully.");
+        if ($queued > 0) {
+            Craft::$app->getSession()->setNotice("{$queued} file(s) uploaded and queued for processing.");
         }
 
         if (!empty($errors)) {
@@ -79,12 +101,14 @@ class KnowledgeBaseController extends Controller
         $this->requirePostRequest();
         $fileId = (int)Craft::$app->getRequest()->getRequiredBodyParam('fileId');
 
-        try {
-            Plugin::getInstance()->knowledgeBase->reprocessFile($fileId);
-            Craft::$app->getSession()->setNotice('File reprocessed successfully.');
-        } catch (\Throwable $e) {
-            Craft::$app->getSession()->setError('Reprocessing failed: ' . $e->getMessage());
+        $record = KnowledgeFileRecord::findOne($fileId);
+        if (!$record) {
+            Craft::$app->getSession()->setError('File not found.');
+            return $this->redirectToPostedUrl();
         }
+
+        Plugin::getInstance()->knowledgeBase->queueProcessing($record);
+        Craft::$app->getSession()->setNotice('File queued for reprocessing.');
 
         return $this->redirectToPostedUrl();
     }

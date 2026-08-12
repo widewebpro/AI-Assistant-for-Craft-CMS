@@ -5,12 +5,15 @@ namespace widewebpro\aiagent\services;
 use Craft;
 use craft\base\Component;
 use craft\helpers\StringHelper;
+use widewebpro\aiagent\jobs\ProcessKnowledgeFileJob;
 use widewebpro\aiagent\Plugin;
 use widewebpro\aiagent\records\KnowledgeFileRecord;
 use widewebpro\aiagent\records\KnowledgeChunkRecord;
 
 class KnowledgeBaseService extends Component
 {
+    public const STUCK_AFTER_MINUTES = 10;
+
     private const CHUNK_SIZE = 500;     // ~500 tokens target
     private const CHUNK_OVERLAP = 50;   // ~50 tokens overlap
     private const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -25,7 +28,7 @@ class KnowledgeBaseService extends Component
     }
 
     /**
-     * Process an uploaded file: store, extract text, chunk, and generate embeddings.
+     * Store an uploaded file and queue background processing (extract, chunk, embed).
      */
     public function processUploadedFile(\yii\web\UploadedFile $file): KnowledgeFileRecord
     {
@@ -48,16 +51,17 @@ class KnowledgeBaseService extends Component
         $record->uid = StringHelper::UUID();
         $record->save(false);
 
-        try {
-            $this->_processFile($record, $filePath);
-        } catch (\Throwable $e) {
-            $record->status = 'error';
-            $record->save(false);
-            Craft::error("KB file processing failed: " . $e->getMessage(), 'ai-agent');
-            throw $e;
-        }
+        $this->queueProcessing($record);
 
         return $record;
+    }
+
+    public function queueProcessing(KnowledgeFileRecord $record): void
+    {
+        Craft::$app->getQueue()->push(new ProcessKnowledgeFileJob([
+            'fileId' => $record->id,
+            'description' => "AI Agent: processing “{$record->originalName}”",
+        ]));
     }
 
     /**
@@ -147,12 +151,34 @@ class KnowledgeBaseService extends Component
 
     private function _extractText(string $filePath, string $mimeType): string
     {
-        return match (true) {
+        $text = match (true) {
             str_contains($mimeType, 'pdf') => $this->_extractPdf($filePath),
             str_contains($mimeType, 'wordprocessingml') || str_ends_with($filePath, '.docx') => $this->_extractDocx($filePath),
             str_contains($mimeType, 'text/') || str_ends_with($filePath, '.md') || str_ends_with($filePath, '.txt') => file_get_contents($filePath),
             default => file_get_contents($filePath),
         };
+
+        return $this->_sanitizeUtf8($text);
+    }
+
+    private function _sanitizeUtf8(string $text): string
+    {
+        $text = preg_replace_callback(
+            '/\xED[\xA0-\xAF][\x80-\xBF]\xED[\xB0-\xBF][\x80-\xBF]/',
+            function (array $m) {
+                $hi = ((ord($m[0][0]) & 0x0F) << 12) | ((ord($m[0][1]) & 0x3F) << 6) | (ord($m[0][2]) & 0x3F);
+                $lo = ((ord($m[0][3]) & 0x0F) << 12) | ((ord($m[0][4]) & 0x3F) << 6) | (ord($m[0][5]) & 0x3F);
+                return mb_chr(0x10000 + (($hi - 0xD800) << 10) + ($lo - 0xDC00), 'UTF-8');
+            },
+            $text
+        );
+
+        $sub = mb_substitute_character();
+        mb_substitute_character('none');
+        $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+        mb_substitute_character($sub);
+
+        return $text;
     }
 
     private function _extractPdf(string $filePath): string
