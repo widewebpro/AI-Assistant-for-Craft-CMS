@@ -25,6 +25,10 @@ class EmbeddingService extends Component
             $texts = array_map(fn($c) => $c->content, $batch);
             $embeddings = $provider->embedBatch($texts);
 
+            if (count($embeddings) < count($batch)) {
+                throw new \RuntimeException('Embedding provider returned ' . count($embeddings) . ' of ' . count($batch) . ' vectors.');
+            }
+
             foreach ($batch as $i => $chunk) {
                 if (!isset($embeddings[$i])) continue;
 
@@ -65,19 +69,19 @@ class EmbeddingService extends Component
     private function _embeddingSearch(string $query, int $limit): array
     {
         $provider = Plugin::getInstance()->provider;
+        $settings = Plugin::getInstance()->getSettings();
         $queryEmbedding = $provider->embed($query);
 
         if (empty($queryEmbedding)) {
             return [];
         }
-
-        // Load all embeddings from DB
+    
         $rows = (new \yii\db\Query())
             ->select(['e.chunkId', 'e.embedding', 'c.content', 'c.fileId', 'c.metadata', 'f.originalName as filename'])
             ->from('{{%aiagent_embeddings}} e')
             ->innerJoin('{{%aiagent_knowledge_chunks}} c', 'c.id = e.chunkId')
             ->innerJoin('{{%aiagent_knowledge_files}} f', 'f.id = c.fileId')
-            ->where(['f.status' => 'ready'])
+            ->where(['f.status' => 'ready', 'e.model' => $settings->embeddingModel])
             ->all();
 
         if (empty($rows)) {

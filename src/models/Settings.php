@@ -10,6 +10,7 @@ class Settings extends Model
     public bool $enabled = false;
     public string $aiProvider = 'openai'; // openai | anthropic
     public string $apiKey = '';
+    public string $embeddingApiKey = '';
     public string $openaiModel = 'gpt-4o-mini';
     public string $anthropicModel = 'claude-3-5-sonnet-latest';
     public string $embeddingModel = 'text-embedding-3-small';

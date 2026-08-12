@@ -74,7 +74,7 @@
 
         {{ forms.selectField({
             label: "Embedding Model",
-            instructions: "Model used for knowledge base embeddings.",
+            instructions: "Model used for knowledge base embeddings. Changing this requires reprocessing every knowledge base file, since vectors from different models are not comparable.",
             id: "embeddingModel",
             name: "embeddingModel",
             value: settings.embeddingModel,
@@ -82,6 +82,15 @@
                 { label: "text-embedding-3-small (OpenAI)", value: "text-embedding-3-small" },
                 { label: "text-embedding-3-large (OpenAI)", value: "text-embedding-3-large" },
             ],
+        }) }}
+
+        {{ forms.passwordField({
+            label: "Embedding API Key",
+            instructions: "OpenAI API key for knowledge base embeddings. Embeddings always use OpenAI regardless of the chat provider above — so if the chat provider is Anthropic, an OpenAI key is required here for semantic search to work. Leave blank to reuse the chat API key (only when the chat provider is OpenAI).",
+            id: "embeddingApiKey",
+            name: "embeddingApiKey",
+            value: settings.embeddingApiKey,
+            class: "fullwidth",
         }) }}
 
         {{ forms.textField({

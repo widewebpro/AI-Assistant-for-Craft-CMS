@@ -54,16 +54,37 @@ class ProviderService extends Component
         }
     }
 
+    private function _embeddingApiKey(): string
+    {
+        $settings = Plugin::getInstance()->getSettings();
+
+        if ($settings->embeddingApiKey !== '') {
+            return $settings->embeddingApiKey;
+        }
+
+        return $settings->aiProvider === 'openai' ? $settings->apiKey : '';
+    }
+
+    /** Whether an OpenAI embedding key is available (for surfacing a clear CP warning). */
+    public function hasEmbeddingKey(): bool
+    {
+        return $this->_embeddingApiKey() !== '';
+    }
+
     /**
      * Generate embedding vector for text. Always uses OpenAI embeddings API.
      */
     public function embed(string $text): array
     {
         $settings = Plugin::getInstance()->getSettings();
+        $apiKey = $this->_embeddingApiKey();
+        if ($apiKey === '') {
+            throw new \RuntimeException('No OpenAI embedding API key is configured (Settings → General → Embedding API Key). Embeddings always use OpenAI, even when the chat provider is Anthropic.');
+        }
 
         $response = $this->_getClient()->post('https://api.openai.com/v1/embeddings', [
             'headers' => [
-                'Authorization' => 'Bearer ' . $settings->apiKey,
+                'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ],
             'json' => [
@@ -82,10 +103,14 @@ class ProviderService extends Component
     public function embedBatch(array $texts): array
     {
         $settings = Plugin::getInstance()->getSettings();
+        $apiKey = $this->_embeddingApiKey();
+        if ($apiKey === '') {
+            throw new \RuntimeException('No OpenAI embedding API key is configured (Settings → General → Embedding API Key). Embeddings always use OpenAI, even when the chat provider is Anthropic.');
+        }
 
         $response = $this->_getClient()->post('https://api.openai.com/v1/embeddings', [
             'headers' => [
-                'Authorization' => 'Bearer ' . $settings->apiKey,
+                'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ],
             'json' => [

@@ -23,6 +23,18 @@
         </div>
     </div>
 
+    {% if totalChunks %}
+    {% set vectorsMissing = totalChunks - vectorCount %}
+    <div class="pane" style="margin-bottom: 24px;{{ vectorsMissing > 0 ? ' border-left: 3px solid #dc2626;' : '' }}">
+        <h3 class="light" style="margin-bottom: 4px;">Knowledge Base Vectors</h3>
+        <p style="font-size: 2em; font-weight: 600; margin: 0;{{ vectorsMissing > 0 ? ' color: #dc2626;' : '' }}">{{ vectorCount }} <span class="light" style="font-size: 0.5em; font-weight: 400;">of {{ totalChunks }} chunks</span></p>
+        <p class="light" style="margin: 4px 0 0; font-size: 12px;">
+            for <code>{{ embeddingModel }}</code>.
+            {%- if vectorsMissing > 0 %} {{ vectorsMissing }} chunk(s) have no vector for this model — reprocess those files in <a href="{{ cpUrl('ai-agent/settings/knowledge-base') }}">Knowledge Base</a>, or semantic search silently falls back to keyword matching for them.{% endif %}
+        </p>
+    </div>
+    {% endif %}
+
     <div class="pane">
         <h2>Recent Conversations</h2>
         {% if recentConversations | length %}

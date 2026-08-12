@@ -83,7 +83,14 @@ class KnowledgeBaseService extends Component
         $record->status = 'processing';
         $record->save(false);
 
-        $this->_processFile($record, $filePath);
+        try {
+            $this->_processFile($record, $filePath);
+        } catch (\Throwable $e) {
+            $record->status = 'error';
+            $record->save(false);
+            Craft::error("KB file reprocessing failed: " . $e->getMessage(), 'ai-agent');
+            throw $e;
+        }
     }
 
     /**
@@ -132,13 +139,7 @@ class KnowledgeBaseService extends Component
             $chunkRecords[] = $chunk;
         }
 
-        // Generate embeddings in batches
-        try {
-            $embeddingService = Plugin::getInstance()->embedding;
-            $embeddingService->generateEmbeddingsForChunks($chunkRecords);
-        } catch (\Throwable $e) {
-            Craft::warning("Embedding generation failed, KB will use keyword fallback: " . $e->getMessage(), 'ai-agent');
-        }
+        Plugin::getInstance()->embedding->generateEmbeddingsForChunks($chunkRecords);
 
         $record->status = 'ready';
         $record->save(false);

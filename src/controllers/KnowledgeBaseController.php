@@ -24,6 +24,7 @@ class KnowledgeBaseController extends Controller
     {
         return $this->renderTemplate('ai-agent/settings/knowledge-base', [
             'plugin' => Plugin::getInstance(),
+            'embeddingReady' => Plugin::getInstance()->provider->hasEmbeddingKey(),
         ]);
     }
 

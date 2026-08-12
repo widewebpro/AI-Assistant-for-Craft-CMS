@@ -33,6 +33,13 @@ class DefaultController extends Controller
             ->limit(10)
             ->all();
 
+        $embeddingModel = Plugin::getInstance()->getSettings()->embeddingModel;
+        $totalChunks = (int)(new \yii\db\Query())->from('{{%aiagent_knowledge_chunks}}')->count();
+        $vectorCount = (int)(new \yii\db\Query())
+            ->from('{{%aiagent_embeddings}}')
+            ->where(['model' => $embeddingModel])
+            ->count();
+
         return $this->renderTemplate('ai-agent/_index', [
             'plugin' => Plugin::getInstance(),
             'totalConversations' => $totalConversations,
@@ -40,6 +47,9 @@ class DefaultController extends Controller
             'escalatedConversations' => $escalatedConversations,
             'totalMessages' => $totalMessages,
             'recentConversations' => $recentConversations,
+            'vectorCount' => $vectorCount,
+            'totalChunks' => $totalChunks,
+            'embeddingModel' => $embeddingModel,
         ]);
     }
 }

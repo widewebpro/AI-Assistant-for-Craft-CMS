@@ -38,6 +38,7 @@ class SettingsController extends Controller
         $settings->enabled = (bool)$request->getBodyParam('enabled');
         $settings->aiProvider = $request->getBodyParam('aiProvider', 'openai');
         $settings->apiKey = $request->getBodyParam('apiKey', '');
+        $settings->embeddingApiKey = $request->getBodyParam('embeddingApiKey', '');
         $settings->openaiModel = $request->getBodyParam('openaiModel', 'gpt-4o-mini');
         $settings->anthropicModel = $request->getBodyParam('anthropicModel', 'claude-3-5-sonnet-latest');
         $settings->embeddingModel = $request->getBodyParam('embeddingModel', 'text-embedding-3-small');
