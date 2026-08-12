@@ -6,6 +6,7 @@
 <div class="pane">
     <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
         <form method="get" action="{{ cpUrl('ai-agent/conversations') }}" style="display: flex; gap: 12px; align-items: center;">
+            <input type="text" name="search" value="{{ search }}" class="text" placeholder="Session, page URL or message text…" autocomplete="off" style="width: 260px;">
             <select name="status" class="text">
                 <option value="">All Statuses</option>
                 <option value="active" {{ status == 'active' ? 'selected' : '' }}>Active</option>
@@ -13,6 +14,9 @@
                 <option value="escalated" {{ status == 'escalated' ? 'selected' : '' }}>Escalated</option>
             </select>
             <button type="submit" class="btn">Filter</button>
+            {% if search or status %}
+                <a href="{{ cpUrl('ai-agent/conversations') }}" class="btn">Reset</a>
+            {% endif %}
         </form>
         <span class="light" style="margin-left: auto;">{{ total }} conversation{{ total != 1 ? 's' : '' }}</span>
     </div>
@@ -54,7 +58,7 @@
             {% if p == page %}
                 <span class="btn small disabled">{{ p }}</span>
             {% else %}
-                <a href="{{ cpUrl('ai-agent/conversations', { page: p, status: status }) }}" class="btn small">{{ p }}</a>
+                <a href="{{ cpUrl('ai-agent/conversations', { page: p, status: status, search: search }) }}" class="btn small">{{ p }}</a>
             {% endif %}
         {% endfor %}
     </div>

@@ -26,16 +26,11 @@ class ConversationsController extends Controller
     {
         $request = Craft::$app->getRequest();
         $status = $request->getQueryParam('status', '');
-        $search = $request->getQueryParam('search', '');
+        $search = trim((string)$request->getQueryParam('search', ''));
         $page = (int)$request->getQueryParam('page', 1);
         $perPage = 20;
 
-        $query = ConversationRecord::find()
-            ->orderBy(['dateCreated' => SORT_DESC]);
-
-        if ($status) {
-            $query->where(['status' => $status]);
-        }
+        $query = $this->_conversationQuery($status, $search);
 
         $total = $query->count();
         $conversations = $query
@@ -52,6 +47,32 @@ class ConversationsController extends Controller
             'status' => $status,
             'search' => $search,
         ]);
+    }
+
+    /** List query filtered by status and a search over sessionId / pageUrl / message content. */
+    private function _conversationQuery(string $status, string $search): \yii\db\ActiveQuery
+    {
+        $query = ConversationRecord::find()
+            ->orderBy(['dateCreated' => SORT_DESC]);
+
+        if ($status) {
+            $query->andWhere(['status' => $status]);
+        }
+
+        if ($search !== '') {
+            $messageMatch = MessageRecord::find()
+                ->where('[[conversationId]] = {{%aiagent_conversations}}.[[id]]')
+                ->andWhere(['like', 'content', $search]);
+
+            $query->andWhere([
+                'or',
+                ['like', 'sessionId', $search],
+                ['like', 'pageUrl', $search],
+                ['exists', $messageMatch],
+            ]);
+        }
+
+        return $query;
     }
 
     public function actionView(int $conversationId): Response
