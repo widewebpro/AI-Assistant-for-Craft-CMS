@@ -184,6 +184,20 @@
         }) }}
     </div>
 
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Headless Access</h2>
+
+        {{ forms.textareaField({
+            label: "Allowed CORS Origins",
+            instructions: "Only for headless front ends that fetch `/ai-agent/widget-config` from another origin. One origin per line (e.g. `https://app.example.com`), or `*` to allow any. Leave empty for same-origin only.",
+            id: "corsAllowedOrigins",
+            name: "corsAllowedOrigins",
+            value: settings.corsAllowedOrigins,
+            rows: 3,
+            class: "code",
+        }) }}
+    </div>
+
 {% js %}
 document.getElementById('aiProvider').addEventListener('change', function() {
     document.getElementById('openai-models').style.display = this.value === 'openai' ? '' : 'none';

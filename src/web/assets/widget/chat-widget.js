@@ -4,22 +4,6 @@
   var config = window.__aiAgentConfig;
   if (!config || !config.enabled) return;
 
-  // Page rule matching
-  if (config.pageRules && config.pageRules.length > 0) {
-    var path = window.location.pathname;
-    var hasIncludes = config.pageRules.some(function (r) { return r.ruleType === 'include'; });
-    var allowed = !hasIncludes;
-
-    for (var i = 0; i < config.pageRules.length; i++) {
-      var rule = config.pageRules[i];
-      if (matchGlob(rule.pattern, path)) {
-        allowed = rule.ruleType === 'include';
-      }
-    }
-
-    if (!allowed) return;
-  }
-
   var sessionId = getSessionId();
   var isOpen = false;
   var isStreaming = false;
@@ -480,15 +464,6 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
-  }
-
-  function matchGlob(pattern, path) {
-    var regex = pattern
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-      .replace(/\*\*/g, '{{GLOBSTAR}}')
-      .replace(/\*/g, '[^/]*')
-      .replace(/\{\{GLOBSTAR\}\}/g, '.*');
-    return new RegExp('^' + regex + '$').test(path);
   }
 
   function getSessionId() {

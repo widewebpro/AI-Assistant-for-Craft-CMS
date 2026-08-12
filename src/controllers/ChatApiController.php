@@ -222,18 +222,50 @@ class ChatApiController extends Controller
     }
 
     /**
-     * GET /ai-agent/widget-config — Returns widget configuration for the frontend.
+     * GET /ai-agent/widget-config — Widget configuration for headless front ends.
+     * Page rules stay on the server; pass ?path=/some/page to get a 'showOnPage' verdict.
      */
     public function actionWidgetConfig(): Response
     {
         $plugin = Plugin::getInstance();
-        $settings = $plugin->getSettings();
+        $request = Craft::$app->getRequest();
 
-        $config = $plugin->widget->getWidgetConfig();
+        $path = '/' . ltrim((string)$request->getQueryParam('path', '/'), '/');
+        $config = $plugin->widget->getWidgetConfig($path);
 
-        Craft::$app->getResponse()->getHeaders()->set('Access-Control-Allow-Origin', '*');
+        $headers = Craft::$app->getResponse()->getHeaders();
+        if ($allow = $this->_corsOriginFor($request->getOrigin())) {
+            $headers->set('Access-Control-Allow-Origin', $allow);
+            if ($allow !== '*') {
+                $headers->set('Vary', 'Origin');
+            }
+        }
 
         return $this->asJson($config);
+    }
+
+    /**
+     * CORS decision from the corsAllowedOrigins setting: null = no header
+     * (same-origin only), '*' = anyone, else the echoed request origin if listed.
+     */
+    private function _corsOriginFor(?string $requestOrigin): ?string
+    {
+        $raw = (string)Plugin::getInstance()->getSettings()->corsAllowedOrigins;
+        $origins = array_values(array_filter(array_map('trim', preg_split('/\R+/', $raw))));
+
+        if (empty($origins)) {
+            return null;
+        }
+
+        if (in_array('*', $origins, true)) {
+            return '*';
+        }
+
+        if ($requestOrigin !== null && in_array(rtrim($requestOrigin, '/'), $origins, true)) {
+            return $requestOrigin;
+        }
+
+        return null;
     }
 
     /**

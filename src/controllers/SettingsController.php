@@ -51,6 +51,7 @@ class SettingsController extends Controller
         $settings->businessContact = $request->getBodyParam('businessContact', '');
         $settings->businessHours = $request->getBodyParam('businessHours', '');
         $settings->businessExtra = $request->getBodyParam('businessExtra', '');
+        $settings->corsAllowedOrigins = $request->getBodyParam('corsAllowedOrigins', '');
 
         if (!Craft::$app->getPlugins()->savePluginSettings($plugin, $settings->toArray())) {
             Craft::$app->getSession()->setError('Could not save settings.');

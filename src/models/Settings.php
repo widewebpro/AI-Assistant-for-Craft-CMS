@@ -31,6 +31,7 @@ class Settings extends Model
     public string $avatarUrl = '';
     public string $customCss = '';
     public string $customJs = '';
+    public string $corsAllowedOrigins = '';
 
     // Restrictions
     public string $allowedTopics = '';
@@ -114,6 +115,7 @@ class Settings extends Model
             [['rateLimitPerMinutePerIp'], 'integer', 'min' => 0, 'max' => 600],
             [['dailyMessageLimit'], 'integer', 'min' => 0, 'max' => 1000000],
             [['searchMinScore'], 'number', 'min' => 0, 'max' => 1],
+            [['corsAllowedOrigins'], 'string'],
             [['agentName', 'primaryColor', 'welcomeMessage', 'fallbackMessage', 'errorMessage'], 'required'],
         ];
     }
