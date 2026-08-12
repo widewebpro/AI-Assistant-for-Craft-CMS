@@ -120,9 +120,7 @@ class AiService extends Component
 
             if (str_contains($text, '[greeting]')) {
                 $greetingMessages = $this->_buildGreetingMessages($userMessage, $conversationHistory, $settings);
-                foreach ($provider->stream($greetingMessages) as $chunk) {
-                    yield $chunk;
-                }
+                yield from $this->_relayProviderStream($provider->stream($greetingMessages));
                 return;
             }
 
@@ -157,8 +155,24 @@ class AiService extends Component
             $pageUrl
         );
 
-        foreach ($provider->stream($step2Messages) as $chunk) {
-            yield $chunk;
+        yield from $this->_relayProviderStream($provider->stream($step2Messages));
+    }
+
+    private function _relayProviderStream(\Generator $stream): \Generator
+    {
+        foreach ($stream as $chunk) {
+            if (($chunk['type'] ?? '') !== 'tool_calls') {
+                yield $chunk;
+                continue;
+            }
+
+            foreach ($chunk['data'] ?? [] as $call) {
+                $args = $call['arguments'] ?? [];
+                if (is_string($args)) {
+                    $args = json_decode($args, true) ?? [];
+                }
+                yield ['type' => 'tool_call', 'data' => ['tool' => $call['name'] ?? '', 'args' => $args]];
+            }
         }
     }
 

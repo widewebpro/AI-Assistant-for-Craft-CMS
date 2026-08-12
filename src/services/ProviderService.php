@@ -39,8 +39,8 @@ class ProviderService extends Component
     }
 
     /**
-     * Streaming chat completion. Yields chunks as associative arrays.
-     * Each chunk: ['type' => 'text_delta'|'tool_call'|'done', 'data' => ...]
+     * Streaming chat completion. Yields provider-layer chunks:
+     * ['type' => 'text_delta'|'tool_calls'|'done', 'data' => ...]
      */
     public function stream(array $messages, array $tools = [], array $options = []): \Generator
     {
