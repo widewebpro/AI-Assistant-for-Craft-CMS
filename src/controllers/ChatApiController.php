@@ -351,14 +351,16 @@ class ChatApiController extends Controller
             'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
             'gif' => 'image/gif',
-            'svg' => 'image/svg+xml',
             'webp' => 'image/webp',
         ];
         $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $mime = $mimeTypes[$ext] ?? 'application/octet-stream';
+        if (!isset($mimeTypes[$ext])) {
+            throw new \yii\web\NotFoundHttpException('Avatar not found.');
+        }
 
         $response = Craft::$app->getResponse();
-        $response->headers->set('Content-Type', $mime);
+        $response->headers->set('Content-Type', $mimeTypes[$ext]);
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('Cache-Control', 'public, max-age=86400');
         $response->format = Response::FORMAT_RAW;
         $response->data = file_get_contents($filePath);

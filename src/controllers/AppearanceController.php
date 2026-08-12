@@ -3,6 +3,7 @@
 namespace widewebpro\aiagent\controllers;
 
 use Craft;
+use craft\helpers\FileHelper;
 use craft\web\Controller;
 use widewebpro\aiagent\Plugin;
 use yii\web\Response;
@@ -56,18 +57,27 @@ class AppearanceController extends Controller
 
         $avatarFile = UploadedFile::getInstanceByName('avatarFile');
         if ($avatarFile && !$avatarFile->getHasError()) {
-            $allowedExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'];
+            $allowed = [
+                'png' => 'image/png',
+                'jpg' => 'image/jpeg',
+                'jpeg' => 'image/jpeg',
+                'gif' => 'image/gif',
+                'webp' => 'image/webp',
+            ];
             $ext = strtolower($avatarFile->getExtension());
-            if (in_array($ext, $allowedExtensions)) {
-                $this->_deleteAvatarFile();
-                $storagePath = Craft::$app->getPath()->getStoragePath() . '/ai-agent';
-                if (!is_dir($storagePath)) {
-                    mkdir($storagePath, 0775, true);
-                }
-                $avatarFile->saveAs($storagePath . '/avatar.' . $ext);
-                $siteUrl = rtrim(Craft::$app->getSites()->getCurrentSite()->getBaseUrl(), '/');
-                $settings->avatarUrl = $siteUrl . '/ai-agent/avatar';
+            $realMime = $avatarFile->tempName ? FileHelper::getMimeType($avatarFile->tempName) : null;
+            if (!isset($allowed[$ext]) || $realMime !== $allowed[$ext]) {
+                Craft::$app->getSession()->setError('Avatar must be a PNG, JPG, GIF or WebP image.');
+                return $this->redirect('ai-agent/settings/appearance');
             }
+            $this->_deleteAvatarFile();
+            $storagePath = Craft::$app->getPath()->getStoragePath() . '/ai-agent';
+            if (!is_dir($storagePath)) {
+                mkdir($storagePath, 0775, true);
+            }
+            $avatarFile->saveAs($storagePath . '/avatar.' . $ext);
+            $siteUrl = rtrim(Craft::$app->getSites()->getCurrentSite()->getBaseUrl(), '/');
+            $settings->avatarUrl = $siteUrl . '/ai-agent/avatar';
         } elseif (!$removeAvatar) {
             $manualUrl = trim($request->getBodyParam('avatarUrl', ''));
             if ($manualUrl !== '' && $manualUrl !== $settings->avatarUrl) {
