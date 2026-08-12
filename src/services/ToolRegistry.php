@@ -3,6 +3,7 @@
 namespace widewebpro\aiagent\services;
 
 use craft\base\Component;
+use widewebpro\aiagent\events\RegisterToolsEvent;
 use widewebpro\aiagent\tools\BaseTool;
 use widewebpro\aiagent\tools\SearchKnowledgeBaseTool;
 use widewebpro\aiagent\tools\GetPageContextTool;
@@ -12,6 +13,23 @@ use widewebpro\aiagent\tools\EscalateTool;
 
 class ToolRegistry extends Component
 {
+    /**
+     * @event RegisterToolsEvent Lets other plugins add, replace or remove chat tools.
+     *
+     * ```php
+     * use widewebpro\aiagent\events\RegisterToolsEvent;
+     * use widewebpro\aiagent\services\ToolRegistry;
+     * use yii\base\Event;
+     *
+     * Event::on(ToolRegistry::class, ToolRegistry::EVENT_REGISTER_TOOLS,
+     *     function(RegisterToolsEvent $e) {
+     *         $e->tools[] = new SearchEntriesTool();
+     *     }
+     * );
+     * ```
+     */
+    public const EVENT_REGISTER_TOOLS = 'registerTools';
+
     /** @var BaseTool[] */
     private array $_tools = [];
 
@@ -26,6 +44,16 @@ class ToolRegistry extends Component
         $settings = \widewebpro\aiagent\Plugin::getInstance()?->getSettings();
         if ($settings && $settings->escalationEnabled) {
             $this->register(new EscalateTool());
+        }
+
+        if ($this->hasEventHandlers(self::EVENT_REGISTER_TOOLS)) {
+            $event = new RegisterToolsEvent(['tools' => $this->_tools]);
+            $this->trigger(self::EVENT_REGISTER_TOOLS, $event);
+
+            $this->_tools = [];
+            foreach ($event->tools as $tool) {
+                $this->register($tool);
+            }
         }
     }
 
