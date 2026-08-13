@@ -365,6 +365,6 @@ class KnowledgeBaseService extends Component
 
     private function _estimateTokens(string $text): int
     {
-        return (int)ceil(str_word_count($text) * 1.3);
+        return (int)ceil(max(str_word_count($text) * 1.3, mb_strlen($text) / 4));
     }
 }

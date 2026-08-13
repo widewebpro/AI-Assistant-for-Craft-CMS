@@ -261,8 +261,13 @@ class EmbeddingService extends Component
         $meta = is_array($meta) ? $meta : [];
 
         $prefix = implode(' — ', array_filter([$meta['filename'] ?? null, $meta['heading'] ?? null]));
+        $input = $prefix === '' ? $chunk->content : $prefix . ":\n" . $chunk->content;
 
-        return $prefix === '' ? $chunk->content : $prefix . ":\n" . $chunk->content;
+        if (mb_strlen($input) > 16000) {
+            $input = mb_substr($input, 0, 16000);
+        }
+
+        return $input;
     }
 
     /** Scale a vector to unit length; zero vectors are returned unchanged. */
