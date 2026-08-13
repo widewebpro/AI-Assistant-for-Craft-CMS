@@ -218,6 +218,12 @@ class AiService extends Component
         $context = implode("\n\n", $contextParts);
 
         $systemPrompt = "You are {$settings->agentName}. {$settings->agentPersona}\n\n";
+
+        $businessInfo = $this->_businessInfoBlock($settings);
+        if ($businessInfo !== '') {
+            $systemPrompt .= "BUSINESS INFORMATION (reliable facts about the business behind this website):\n{$businessInfo}\n\n";
+        }
+
         $systemPrompt .= "Use the following context to answer the user's question. ";
         $systemPrompt .= "If the context doesn't contain relevant information, say so honestly.\n\n";
         $systemPrompt .= "CONTEXT:\n{$context}";
@@ -235,6 +241,27 @@ class AiService extends Component
 
         $messages[] = ['role' => 'user', 'content' => $userMessage];
         return $messages;
+    }
+
+    private function _businessInfoBlock(object $settings): string
+    {
+        $fields = [
+            'Name' => $settings->businessName,
+            'About' => $settings->businessDescription,
+            'Contact' => $settings->businessContact,
+            'Hours' => $settings->businessHours,
+            'Additional info' => $settings->businessExtra,
+        ];
+
+        $lines = [];
+        foreach ($fields as $label => $value) {
+            $value = trim((string)$value);
+            if ($value !== '') {
+                $lines[] = "{$label}: {$value}";
+            }
+        }
+
+        return implode("\n", $lines);
     }
 
     private function _buildGreetingMessages(string $userMessage, array $history, object $settings): array
