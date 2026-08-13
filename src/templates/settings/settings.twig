@@ -1,0 +1,102 @@
+{% import "_includes/forms" as forms %}
+
+{{ forms.selectField({
+    label: "AI Provider",
+    instructions: "Select your AI provider.",
+    id: "aiProvider",
+    name: "aiProvider",
+    value: settings.aiProvider,
+    options: [
+        { label: "OpenAI", value: "openai" },
+        { label: "Anthropic", value: "anthropic" },
+    ],
+}) }}
+
+{{ forms.autosuggestField({
+    label: "API Key",
+    instructions: "Your AI provider API key. Set an environment variable and reference it here (e.g. `$OPENAI_API_KEY`) so the key never lands in project config.",
+    id: "apiKey",
+    name: "apiKey",
+    value: settings.apiKey,
+    suggestEnvVars: true,
+    class: "code fullwidth",
+}) }}
+
+<div class="js-aiagent-openai" style="{{ settings.aiProvider != 'openai' ? 'display:none' : '' }}">
+    {{ forms.selectField({
+        label: "OpenAI Model",
+        id: "openaiModel",
+        name: "openaiModel",
+        value: settings.openaiModel,
+        options: [
+            { label: "GPT-5.1", value: "gpt-5.1" },
+            { label: "GPT-5 Mini", value: "gpt-5-mini" },
+            { label: "GPT-5 Nano", value: "gpt-5-nano" },
+            { label: "GPT-4.1", value: "gpt-4.1" },
+            { label: "GPT-4.1 Mini", value: "gpt-4.1-mini" },
+            { label: "GPT-4o (legacy)", value: "gpt-4o" },
+            { label: "GPT-4o Mini (legacy)", value: "gpt-4o-mini" },
+        ],
+    }) }}
+</div>
+
+<div class="js-aiagent-anthropic" style="{{ settings.aiProvider != 'anthropic' ? 'display:none' : '' }}">
+    {{ forms.selectField({
+        label: "Anthropic Model",
+        id: "anthropicModel",
+        name: "anthropicModel",
+        value: settings.anthropicModel,
+        options: [
+            { label: "Claude Sonnet 5", value: "claude-sonnet-5" },
+            { label: "Claude Sonnet 4.6", value: "claude-sonnet-4-6" },
+            { label: "Claude Haiku 4.5", value: "claude-haiku-4-5" },
+        ],
+    }) }}
+</div>
+
+{{ forms.selectField({
+    label: "Embedding Model",
+    instructions: "Model used for knowledge base embeddings. Changing this requires reprocessing every knowledge base file, since vectors from different models are not comparable.",
+    id: "embeddingModel",
+    name: "embeddingModel",
+    value: settings.embeddingModel,
+    options: [
+        { label: "text-embedding-3-small (OpenAI)", value: "text-embedding-3-small" },
+        { label: "text-embedding-3-large (OpenAI)", value: "text-embedding-3-large" },
+    ],
+}) }}
+
+{{ forms.autosuggestField({
+    label: "Embedding API Key",
+    instructions: "OpenAI API key for knowledge base embeddings — embeddings always use OpenAI regardless of the chat provider, so with Anthropic above an OpenAI key is required here for semantic search. Leave blank to reuse the chat API key (only when the chat provider is OpenAI). Supports environment variables (e.g. `$OPENAI_API_KEY`).",
+    id: "embeddingApiKey",
+    name: "embeddingApiKey",
+    value: settings.embeddingApiKey,
+    suggestEnvVars: true,
+    class: "code fullwidth",
+}) }}
+
+{{ forms.textField({
+    label: "Max Tokens",
+    instructions: "Maximum tokens for AI response.",
+    id: "maxTokens",
+    name: "maxTokens",
+    value: settings.maxTokens,
+    type: "number",
+    min: 100,
+    max: 8192,
+    size: 10,
+}) }}
+
+{% js %}
+(function () {
+    var sel = document.querySelector('select[name="settings[aiProvider]"], select[name="aiProvider"]');
+    if (!sel) return;
+    var sync = function () {
+        document.querySelectorAll('.js-aiagent-openai').forEach(function (el) { el.style.display = sel.value === 'openai' ? '' : 'none'; });
+        document.querySelectorAll('.js-aiagent-anthropic').forEach(function (el) { el.style.display = sel.value === 'anthropic' ? '' : 'none'; });
+    };
+    sel.addEventListener('change', sync);
+    sync();
+})();
+{% endjs %}

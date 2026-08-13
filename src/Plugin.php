@@ -36,7 +36,7 @@ class Plugin extends BasePlugin
 {
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSection = true;
-    public bool $hasCpSettings = false;
+    public bool $hasCpSettings = true;
 
     public static function config(): array
     {
@@ -94,6 +94,15 @@ class Plugin extends BasePlugin
     protected function createSettingsModel(): ?Model
     {
         return new Settings();
+    }
+
+    protected function settingsHtml(): ?string
+    {
+        return Craft::$app->getView()->renderTemplate(
+            'ai-agent/settings/settings',
+            ['settings' => $this->getSettings()],
+            View::TEMPLATE_MODE_CP
+        );
     }
 
     private function _registerCpRoutes(): void

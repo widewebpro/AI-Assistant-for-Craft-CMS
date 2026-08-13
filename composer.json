@@ -24,7 +24,7 @@
         "developerUrl": "https://wideweb.pro",
         "description": "AI-powered chat agent with knowledge base and customizable widget",
         "class": "widewebpro\\aiagent\\Plugin",
-        "hasCpSettings": false,
+        "hasCpSettings": true,
         "hasCpSection": true
     }
 }

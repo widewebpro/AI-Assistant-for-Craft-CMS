@@ -11,8 +11,8 @@ class Settings extends Model
     public string $aiProvider = 'openai'; // openai | anthropic
     public string $apiKey = '';
     public string $embeddingApiKey = '';
-    public string $openaiModel = 'gpt-4o-mini';
-    public string $anthropicModel = 'claude-3-5-sonnet-latest';
+    public string $openaiModel = 'gpt-5-mini';
+    public string $anthropicModel = 'claude-sonnet-5';
     public string $embeddingModel = 'text-embedding-3-small';
     public int $maxTokens = 1024;
     public float $temperature = 0.7;

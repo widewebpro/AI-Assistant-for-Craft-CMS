@@ -6,7 +6,7 @@
 {% if not embeddingReady %}
 <div class="pane" style="margin-bottom: 24px; border-left: 3px solid #dc2626;">
     <h2 style="color: #dc2626;">No embedding API key</h2>
-    <p class="light">Embeddings always use OpenAI, even when the chat provider is Anthropic. Without an OpenAI key, file processing will fail and semantic search cannot run. Set one under <a href="{{ cpUrl('ai-agent/settings') }}">Settings → General → Embedding API Key</a>.</p>
+    <p class="light">Embeddings always use OpenAI, even when the chat provider is Anthropic. Without an OpenAI key, file processing will fail and semantic search cannot run. An admin can set one under <a href="{{ cpUrl('settings/plugins/ai-agent') }}">Settings → Plugins → {{ plugin.name }} → Embedding API Key</a>.</p>
 </div>
 {% endif %}
 <div class="pane" style="margin-bottom: 24px;">

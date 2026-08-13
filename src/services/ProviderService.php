@@ -4,6 +4,7 @@ namespace widewebpro\aiagent\services;
 
 use Craft;
 use craft\base\Component;
+use craft\helpers\App;
 use widewebpro\aiagent\Plugin;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -54,15 +55,21 @@ class ProviderService extends Component
         }
     }
 
+    private function _chatApiKey(): string
+    {
+        return (string)App::parseEnv(Plugin::getInstance()->getSettings()->apiKey);
+    }
+
     private function _embeddingApiKey(): string
     {
         $settings = Plugin::getInstance()->getSettings();
 
-        if ($settings->embeddingApiKey !== '') {
-            return $settings->embeddingApiKey;
+        $key = (string)App::parseEnv($settings->embeddingApiKey);
+        if ($key !== '') {
+            return $key;
         }
 
-        return $settings->aiProvider === 'openai' ? $settings->apiKey : '';
+        return $settings->aiProvider === 'openai' ? $this->_chatApiKey() : '';
     }
 
     /** Whether an OpenAI embedding key is available (for surfacing a clear CP warning). */
@@ -79,7 +86,7 @@ class ProviderService extends Component
         $settings = Plugin::getInstance()->getSettings();
         $apiKey = $this->_embeddingApiKey();
         if ($apiKey === '') {
-            throw new \RuntimeException('No OpenAI embedding API key is configured (Settings → General → Embedding API Key). Embeddings always use OpenAI, even when the chat provider is Anthropic.');
+            throw new \RuntimeException('No OpenAI embedding API key is configured (Settings → Plugins → AI Assistant → Embedding API Key). Embeddings always use OpenAI, even when the chat provider is Anthropic.');
         }
 
         $response = $this->_getClient()->post('https://api.openai.com/v1/embeddings', [
@@ -105,7 +112,7 @@ class ProviderService extends Component
         $settings = Plugin::getInstance()->getSettings();
         $apiKey = $this->_embeddingApiKey();
         if ($apiKey === '') {
-            throw new \RuntimeException('No OpenAI embedding API key is configured (Settings → General → Embedding API Key). Embeddings always use OpenAI, even when the chat provider is Anthropic.');
+            throw new \RuntimeException('No OpenAI embedding API key is configured (Settings → Plugins → AI Assistant → Embedding API Key). Embeddings always use OpenAI, even when the chat provider is Anthropic.');
         }
 
         $response = $this->_getClient()->post('https://api.openai.com/v1/embeddings', [
@@ -129,24 +136,43 @@ class ProviderService extends Component
 
     // ─── OpenAI ──────────────────────────────────────────────────
 
-    private function _openaiChat(array $messages, array $tools, array $options): array
+    private function _openaiPayload(array $messages, array $tools, array $options, bool $stream): array
     {
         $settings = Plugin::getInstance()->getSettings();
+        $model = $settings->openaiModel;
+
         $payload = [
-            'model' => $settings->openaiModel,
+            'model' => $model,
             'messages' => $messages,
-            'max_tokens' => $options['max_tokens'] ?? $settings->maxTokens,
-            'temperature' => $options['temperature'] ?? $settings->temperature,
         ];
+
+        $maxTokens = $options['max_tokens'] ?? $settings->maxTokens;
+        if (preg_match('/^(gpt-5|o\d)/', $model)) {
+            $payload['max_completion_tokens'] = $maxTokens;
+        } else {
+            $payload['max_tokens'] = $maxTokens;
+            $payload['temperature'] = $options['temperature'] ?? $settings->temperature;
+        }
+
+        if ($stream) {
+            $payload['stream'] = true;
+        }
 
         if (!empty($tools)) {
             $payload['tools'] = $this->_formatOpenAITools($tools);
             $payload['tool_choice'] = 'auto';
         }
 
+        return $payload;
+    }
+
+    private function _openaiChat(array $messages, array $tools, array $options): array
+    {
+        $payload = $this->_openaiPayload($messages, $tools, $options, false);
+
         $response = $this->_getClient()->post('https://api.openai.com/v1/chat/completions', [
             'headers' => [
-                'Authorization' => 'Bearer ' . $settings->apiKey,
+                'Authorization' => 'Bearer ' . $this->_chatApiKey(),
                 'Content-Type' => 'application/json',
             ],
             'json' => $payload,
@@ -158,23 +184,11 @@ class ProviderService extends Component
 
     private function _openaiStream(array $messages, array $tools, array $options): \Generator
     {
-        $settings = Plugin::getInstance()->getSettings();
-        $payload = [
-            'model' => $settings->openaiModel,
-            'messages' => $messages,
-            'max_tokens' => $options['max_tokens'] ?? $settings->maxTokens,
-            'temperature' => $options['temperature'] ?? $settings->temperature,
-            'stream' => true,
-        ];
-
-        if (!empty($tools)) {
-            $payload['tools'] = $this->_formatOpenAITools($tools);
-            $payload['tool_choice'] = 'auto';
-        }
+        $payload = $this->_openaiPayload($messages, $tools, $options, true);
 
         $response = $this->_getClient()->post('https://api.openai.com/v1/chat/completions', [
             'headers' => [
-                'Authorization' => 'Bearer ' . $settings->apiKey,
+                'Authorization' => 'Bearer ' . $this->_chatApiKey(),
                 'Content-Type' => 'application/json',
             ],
             'json' => $payload,
@@ -308,7 +322,7 @@ class ProviderService extends Component
 
         $response = $this->_getClient()->post('https://api.anthropic.com/v1/messages', [
             'headers' => [
-                'x-api-key' => $settings->apiKey,
+                'x-api-key' => $this->_chatApiKey(),
                 'anthropic-version' => '2023-06-01',
                 'Content-Type' => 'application/json',
             ],
@@ -350,7 +364,7 @@ class ProviderService extends Component
 
         $response = $this->_getClient()->post('https://api.anthropic.com/v1/messages', [
             'headers' => [
-                'x-api-key' => $settings->apiKey,
+                'x-api-key' => $this->_chatApiKey(),
                 'anthropic-version' => '2023-06-01',
                 'Content-Type' => 'application/json',
             ],
