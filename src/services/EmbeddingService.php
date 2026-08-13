@@ -12,6 +12,7 @@ class EmbeddingService extends Component
     private const BATCH_SIZE = 20;
     private const RRF_K = 60;
     private const CANDIDATE_POOL = 20;
+    private const MMR_REDUNDANCY = 0.92;
 
     public int $searchBatchSize = 500;
 
@@ -69,7 +70,75 @@ class EmbeddingService extends Component
             Craft::warning("Keyword search failed: " . $e->getMessage(), 'ai-agent');
         }
 
-        return $this->_rrfMerge($vectorResults ?? [], $keywordResults, $limit);
+        $candidates = $this->_rrfMerge($vectorResults ?? [], $keywordResults, $pool);
+
+        return $this->_diversify($candidates, $limit);
+    }
+
+    private function _diversify(array $candidates, int $limit): array
+    {
+        if (count($candidates) <= $limit) {
+            return $candidates;
+        }
+
+        $vectors = $this->_embeddingsForChunks(array_column($candidates, 'chunkId'));
+
+        $selected = [];
+        $deferred = [];
+
+        foreach ($candidates as $candidate) {
+            if (count($selected) === $limit) {
+                break;
+            }
+
+            $vector = $vectors[$candidate['chunkId']] ?? null;
+            $redundant = false;
+
+            if ($vector !== null) {
+                foreach ($selected as $pick) {
+                    $pickVector = $vectors[$pick['chunkId']] ?? null;
+                    if ($pickVector !== null && $this->_dot($vector, $pickVector) >= self::MMR_REDUNDANCY) {
+                        $redundant = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($redundant) {
+                $deferred[] = $candidate;
+            } else {
+                $selected[] = $candidate;
+            }
+        }
+
+        foreach ($deferred as $candidate) {
+            if (count($selected) === $limit) {
+                break;
+            }
+            $selected[] = $candidate;
+        }
+
+        return $selected;
+    }
+
+    private function _embeddingsForChunks(array $chunkIds): array
+    {
+        if (empty($chunkIds)) {
+            return [];
+        }
+
+        $rows = (new \yii\db\Query())
+            ->select(['chunkId', 'embedding'])
+            ->from('{{%aiagent_embeddings}}')
+            ->where(['chunkId' => $chunkIds, 'model' => Plugin::getInstance()->getSettings()->embeddingModel])
+            ->all();
+
+        $vectors = [];
+        foreach ($rows as $row) {
+            $vectors[$row['chunkId']] = array_values(unpack('f*', $row['embedding']));
+        }
+
+        return $vectors;
     }
 
     private function _rrfMerge(array $vectorResults, array $keywordResults, int $limit): array
