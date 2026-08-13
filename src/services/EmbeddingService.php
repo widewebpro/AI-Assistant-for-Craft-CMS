@@ -10,6 +10,7 @@ use widewebpro\aiagent\records\KnowledgeChunkRecord;
 class EmbeddingService extends Component
 {
     private const BATCH_SIZE = 20;
+    public int $searchBatchSize = 500;
 
     /**
      * Generate and store embeddings for an array of chunk records.
@@ -32,7 +33,7 @@ class EmbeddingService extends Component
             foreach ($batch as $i => $chunk) {
                 if (!isset($embeddings[$i])) continue;
 
-                $embeddingBinary = pack('f*', ...$embeddings[$i]);
+                $embeddingBinary = pack('f*', ...$this->_normalize($embeddings[$i]));
 
                 Craft::$app->getDb()->createCommand()
                     ->insert('{{%aiagent_embeddings}}', [
@@ -78,41 +79,51 @@ class EmbeddingService extends Component
             return null;
         }
 
+        $queryEmbedding = $this->_normalize($queryEmbedding);
         $settings = Plugin::getInstance()->getSettings();
+        $threshold = (float)$settings->searchMinScore;
+        $batchSize = max(1, $this->searchBatchSize);
 
-        $rows = (new \yii\db\Query())
-            ->select(['e.chunkId', 'e.embedding', 'c.content', 'c.fileId', 'c.metadata', 'f.originalName as filename'])
-            ->from('{{%aiagent_embeddings}} e')
-            ->innerJoin('{{%aiagent_knowledge_chunks}} c', 'c.id = e.chunkId')
-            ->innerJoin('{{%aiagent_knowledge_files}} f', 'f.id = c.fileId')
-            ->where(['f.status' => 'ready', 'e.model' => $settings->embeddingModel])
-            ->all();
+        $scored = [];
+        $seenAny = false;
+        $lastChunkId = 0;
 
-        if (empty($rows)) {
+        do {
+            $rows = (new \yii\db\Query())
+                ->select(['e.chunkId', 'e.embedding', 'c.content', 'c.fileId', 'c.metadata', 'f.originalName as filename'])
+                ->from('{{%aiagent_embeddings}} e')
+                ->innerJoin('{{%aiagent_knowledge_chunks}} c', 'c.id = e.chunkId')
+                ->innerJoin('{{%aiagent_knowledge_files}} f', 'f.id = c.fileId')
+                ->where(['f.status' => 'ready', 'e.model' => $settings->embeddingModel])
+                ->andWhere(['>', 'e.chunkId', $lastChunkId])
+                ->orderBy(['e.chunkId' => SORT_ASC])
+                ->limit($batchSize)
+                ->all();
+
+            foreach ($rows as $row) {
+                $seenAny = true;
+                $lastChunkId = (int)$row['chunkId'];
+
+                $storedEmbedding = array_values(unpack('f*', $row['embedding']));
+                $score = $this->_dot($queryEmbedding, $storedEmbedding);
+
+                if ($score < $threshold) {
+                    continue;
+                }
+
+                $scored[] = [
+                    'content' => $row['content'],
+                    'filename' => $row['filename'],
+                    'chunkId' => $row['chunkId'],
+                    'score' => $score,
+                ];
+            }
+        } while (count($rows) === $batchSize);
+
+        if (!$seenAny) {
             return null;
         }
 
-        $threshold = (float)$settings->searchMinScore;
-
-        // Compute cosine similarity, keeping only chunks at or above the threshold.
-        $scored = [];
-        foreach ($rows as $row) {
-            $storedEmbedding = array_values(unpack('f*', $row['embedding']));
-            $score = $this->_cosineSimilarity($queryEmbedding, $storedEmbedding);
-
-            if ($score < $threshold) {
-                continue;
-            }
-
-            $scored[] = [
-                'content' => $row['content'],
-                'filename' => $row['filename'],
-                'chunkId' => $row['chunkId'],
-                'score' => $score,
-            ];
-        }
-
-        // Sort by score descending
         usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
 
         return array_slice($scored, 0, $limit);
@@ -143,26 +154,31 @@ class EmbeddingService extends Component
         ], $results);
     }
 
-    private function _cosineSimilarity(array $a, array $b): float
+    /** Scale a vector to unit length; zero vectors are returned unchanged. */
+    private function _normalize(array $v): array
     {
-        $dotProduct = 0.0;
-        $normA = 0.0;
-        $normB = 0.0;
+        $sum = 0.0;
+        foreach ($v as $x) {
+            $sum += $x * $x;
+        }
+
+        $norm = sqrt($sum);
+        if ($norm == 0.0) {
+            return $v;
+        }
+
+        return array_map(fn($x) => $x / $norm, $v);
+    }
+
+    private function _dot(array $a, array $b): float
+    {
         $len = min(count($a), count($b));
+        $dot = 0.0;
 
         for ($i = 0; $i < $len; $i++) {
-            $dotProduct += $a[$i] * $b[$i];
-            $normA += $a[$i] * $a[$i];
-            $normB += $b[$i] * $b[$i];
+            $dot += $a[$i] * $b[$i];
         }
 
-        $normA = sqrt($normA);
-        $normB = sqrt($normB);
-
-        if ($normA == 0 || $normB == 0) {
-            return 0.0;
-        }
-
-        return $dotProduct / ($normA * $normB);
+        return $dot;
     }
 }
