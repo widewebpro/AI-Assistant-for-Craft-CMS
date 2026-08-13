@@ -18,6 +18,15 @@ class AiService extends Component
         $provider = Plugin::getInstance()->provider;
         $toolRegistry = Plugin::getInstance()->tools;
 
+        if (!$this->isInScope($userMessage, $conversationHistory)) {
+            return [
+                'text' => $settings->fallbackMessage,
+                'tool_calls' => [],
+                'tool_results' => [],
+                'usage' => [],
+            ];
+        }
+
         // Step 1: Validation & Tool Selection
         $step1Messages = $this->_buildStep1Messages($userMessage, $conversationHistory, $pageUrl);
         $toolSchemas = $toolRegistry->getSchemas();
@@ -100,6 +109,12 @@ class AiService extends Component
         $settings = Plugin::getInstance()->getSettings();
         $provider = Plugin::getInstance()->provider;
         $toolRegistry = Plugin::getInstance()->tools;
+
+        if (!$this->isInScope($userMessage, $conversationHistory)) {
+            yield ['type' => 'text_delta', 'data' => $settings->fallbackMessage];
+            yield ['type' => 'done', 'data' => ['tool_calls' => [], 'tool_results' => []]];
+            return;
+        }
 
         // Step 1: Validation & Tool Selection (non-streaming)
         $step1Messages = $this->_buildStep1Messages($userMessage, $conversationHistory, $pageUrl);
@@ -239,9 +254,80 @@ class AiService extends Component
         return $messages;
     }
 
+    public function isInScope(string $userMessage, array $conversationHistory = []): bool
+    {
+        $settings = Plugin::getInstance()->getSettings();
+        $allowed = trim($settings->allowedTopics);
+
+        if ($allowed === '') {
+            return true;
+        }
+
+        $prompt = "You decide whether a message to a website assistant is within its permitted subject matter.\n\n"
+            . "PERMITTED SUBJECTS — the complete list:\n{$allowed}\n\n"
+            . "Answer IN_SCOPE if the message is about one of those subjects.\n"
+            . "Answer OUT_OF_SCOPE for anything else. \"Anything else\" includes ordinary questions about the\n"
+            . "business that are not named above — opening hours, contact details, pricing, delivery, returns,\n"
+            . "the company itself — and any general knowledge question.\n"
+            . "Answer IN_SCOPE for greetings, thanks, other pleasantries, and requests to speak to a human.\n"
+            . "If the message is a follow-up, judge it by what the conversation is about.\n\n"
+            . "Reply with exactly one word: IN_SCOPE or OUT_OF_SCOPE.";
+
+        $messages = [['role' => 'system', 'content' => $prompt]];
+
+        foreach (array_slice($conversationHistory, -4) as $msg) {
+            $messages[] = ['role' => $msg['role'], 'content' => $msg['content']];
+        }
+
+        $messages[] = ['role' => 'user', 'content' => $userMessage];
+
+        try {
+            // No low output cap here: reasoning models (gpt-5*/o*, Claude with
+            // adaptive thinking) spend token budget before emitting text, and a
+            // tight cap starves them into an empty verdict — which fails open
+            // and silently disables the whitelist. The reply is one word anyway.
+            $response = Plugin::getInstance()->provider->chat($messages, [], [
+                'temperature' => 0,
+            ]);
+        } catch (\Throwable $e) {
+            Craft::error('Scope check failed, allowing the message through: ' . $e->getMessage(), 'ai-agent');
+            return true;
+        }
+
+        $verdict = strtoupper($response['text'] ?? '');
+
+        if (str_contains($verdict, 'OUT_OF_SCOPE')) {
+            return false;
+        }
+
+        if (!str_contains($verdict, 'IN_SCOPE')) {
+            Craft::warning("Scope check returned an unusable verdict, allowing through: {$verdict}", 'ai-agent');
+        }
+
+        return true;
+    }
+
     private function _buildStep1SystemPrompt(object $settings, string $pageUrl): string
     {
         $prompt = "You are a routing assistant for {$settings->agentName}. Your job is to classify the user's message and call the right tools.\n\n";
+
+        // The topic gate has to come before the categories: once the model has
+        // picked "question that needs information" it treats being helpful as
+        // the goal, and a whitelist further down the prompt loses to that.
+        if ($settings->allowedTopics) {
+            $prompt .= "SCOPE GATE — APPLY THIS FIRST, BEFORE ANYTHING ELSE:\n";
+            $prompt .= "This assistant is restricted to the following topics ONLY:\n{$settings->allowedTopics}\n\n";
+            $prompt .= "If the user's message is not about one of those topics, respond with exactly [OFF_TOPIC] and stop.\n";
+            $prompt .= "This applies even when you could answer, even when the answer is in the knowledge base,\n";
+            $prompt .= "and even for ordinary questions about this business — opening hours, contact details,\n";
+            $prompt .= "pricing, delivery, the company itself — unless that subject is named in the list above.\n";
+            $prompt .= "Being unhelpful about an out-of-scope question is the correct behaviour here.\n";
+            $prompt .= "Greetings and requests for a human are exempt: classify those normally.\n\n";
+        }
+
+        if ($settings->disallowedTopics) {
+            $prompt .= "BANNED TOPICS — respond with exactly [OFF_TOPIC] for any message about:\n{$settings->disallowedTopics}\n\n";
+        }
 
         $prompt .= "MESSAGE CLASSIFICATION — pick ONE:\n\n";
 
@@ -288,21 +374,15 @@ class AiService extends Component
             $prompt .= "\n";
         }
 
-        if ($settings->allowedTopics) {
-            $prompt .= "ALLOWED TOPICS (only these are on-topic):\n{$settings->allowedTopics}\n\n";
-        }
-
-        if ($settings->disallowedTopics) {
-            $prompt .= "DISALLOWED TOPICS (refuse these — classify as OFF-TOPIC):\n{$settings->disallowedTopics}\n\n";
-        }
-
         $prompt .= "TOOL SELECTION RULES (for category B messages):\n";
         $prompt .= "1. For questions that could be answered by documents, call search_knowledge_base. This is your PRIMARY source.\n";
         $prompt .= "2. Also call get_business_info if asking about the company, contact info, hours, etc.\n";
         $prompt .= "3. Also call get_page_context if the question relates to the current page.\n";
         $prompt .= "4. Call list_knowledge_topics if unsure what information is available.\n";
         $prompt .= "5. You CAN call multiple tools in a single response.\n";
-        $prompt .= "6. When in doubt, call search_knowledge_base — better to search and find nothing than to skip it.\n";
+        $prompt .= "6. When in doubt about WHICH tool to use, call search_knowledge_base — better to search and find\n";
+        $prompt .= "   nothing than to skip it. This never overrides the scope gate: an out-of-scope message is\n";
+        $prompt .= "   [OFF_TOPIC], not a search.\n";
 
         if ($pageUrl) {
             $prompt .= "\nThe user is currently on page: {$pageUrl}";

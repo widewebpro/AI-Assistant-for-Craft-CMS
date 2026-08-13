@@ -18,7 +18,7 @@
 
         {{ forms.textareaField({
             label: "Allowed Topics",
-            instructions: "One topic per line. If set, the agent will only discuss these topics. Leave empty to allow all topics.",
+            instructions: "One topic per line. If set, the agent will only discuss these topics — anything else, including ordinary questions about the business such as opening hours or pricing, gets the off-topic fallback. Enforced by a separate scope check before each answer, so it adds one short API call per message; leave empty to allow all topics and skip that call.",
             id: "allowedTopics",
             name: "allowedTopics",
             value: settings.allowedTopics,

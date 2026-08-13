@@ -5,10 +5,13 @@ namespace widewebpro\aiagent\services;
 use Craft;
 use craft\base\Component;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use widewebpro\aiagent\Plugin;
 
 class WebhookService extends Component
 {
+    private const MAX_ERROR_LENGTH = 500;
+
     /**
      * Fire all enabled webhook actions for an escalation submission.
      *
@@ -68,6 +71,17 @@ class WebhookService extends Component
                 'status' => $statusCode,
                 'error' => null,
             ];
+        } catch (RequestException $e) {
+            $status = $e->getResponse()?->getStatusCode() ?? 0;
+
+            Craft::error("Webhook '{$name}' failed (HTTP {$status}): {$e->getMessage()}", 'ai-agent');
+
+            return [
+                'name' => $name,
+                'success' => false,
+                'status' => $status,
+                'error' => $this->_truncate($e->getMessage()),
+            ];
         } catch (\Throwable $e) {
             Craft::error("Webhook '{$name}' failed: {$e->getMessage()}", 'ai-agent');
 
@@ -75,9 +89,20 @@ class WebhookService extends Component
                 'name' => $name,
                 'success' => false,
                 'status' => 0,
-                'error' => $e->getMessage(),
+                'error' => $this->_truncate($e->getMessage()),
             ];
         }
+    }
+
+    private function _truncate(string $message): string
+    {
+        $message = trim(preg_replace('/\s+/', ' ', $message));
+
+        if (mb_strlen($message) <= self::MAX_ERROR_LENGTH) {
+            return $message;
+        }
+
+        return mb_substr($message, 0, self::MAX_ERROR_LENGTH) . '… (truncated)';
     }
 
     private function _buildPayload(array $action, array $contactData, array $conversationMeta): array
