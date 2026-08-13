@@ -8,6 +8,8 @@ use craft\base\Model;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterTemplateRootsEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\helpers\ProjectConfig as ProjectConfigHelper;
+use craft\services\ProjectConfig;
 use craft\services\UserPermissions;
 use craft\web\UrlManager;
 use craft\web\View;
@@ -102,6 +104,22 @@ class Plugin extends BasePlugin
             'ai-agent/settings/settings',
             ['settings' => $this->getSettings()],
             View::TEMPLATE_MODE_CP
+        );
+    }
+
+    public function afterSaveSettings(): void
+    {
+        parent::afterSaveSettings();
+
+        $settings = $this->getSettings();
+        if (!$settings) {
+            return;
+        }
+
+        Craft::$app->getProjectConfig()->set(
+            ProjectConfig::PATH_PLUGINS . '.' . $this->handle . '.settings',
+            ProjectConfigHelper::packAssociativeArrays($settings->toArray()),
+            "Change settings for plugin “{$this->handle}”"
         );
     }
 

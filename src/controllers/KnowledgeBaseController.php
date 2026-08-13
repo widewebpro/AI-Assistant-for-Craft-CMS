@@ -4,6 +4,7 @@ namespace widewebpro\aiagent\controllers;
 
 use Craft;
 use craft\db\Query;
+use craft\helpers\DateTimeHelper;
 use craft\web\Controller;
 use widewebpro\aiagent\Plugin;
 use widewebpro\aiagent\records\KnowledgeFileRecord;
@@ -35,7 +36,8 @@ class KnowledgeBaseController extends Controller
     /** File rows for the CP list; 'processing' older than STUCK_AFTER_MINUTES is flagged stuck. */
     private function _fileRows(): array
     {
-        $stuckBefore = (new \DateTime('-' . KnowledgeBaseService::STUCK_AFTER_MINUTES . ' minutes'))
+        $stuckBefore = DateTimeHelper::currentUTCDateTime()
+            ->modify('-' . KnowledgeBaseService::STUCK_AFTER_MINUTES . ' minutes')
             ->format('Y-m-d H:i:s');
 
         $rows = (new Query())

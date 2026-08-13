@@ -4,6 +4,7 @@ namespace widewebpro\aiagent\services;
 
 use Craft;
 use craft\base\Component;
+use craft\helpers\DateTimeHelper;
 use craft\helpers\StringHelper;
 use widewebpro\aiagent\Plugin;
 use widewebpro\aiagent\records\ConversationRecord;
@@ -78,7 +79,7 @@ class ChatService extends Component
 
     public function getRecentMessageCount(string $sessionId, int $seconds = 60): int
     {
-        $since = (new \DateTime())->modify("-{$seconds} seconds")->format('Y-m-d H:i:s');
+        $since = DateTimeHelper::currentUTCDateTime()->modify("-{$seconds} seconds")->format('Y-m-d H:i:s');
 
         return (int)(new \yii\db\Query())
             ->from('{{%aiagent_messages}} m')
@@ -95,7 +96,7 @@ class ChatService extends Component
             return 0;
         }
 
-        $since = (new \DateTime())->modify("-{$seconds} seconds")->format('Y-m-d H:i:s');
+        $since = DateTimeHelper::currentUTCDateTime()->modify("-{$seconds} seconds")->format('Y-m-d H:i:s');
 
         return (int)(new \yii\db\Query())
             ->from('{{%aiagent_messages}} m')
@@ -108,7 +109,7 @@ class ChatService extends Component
     /** Total user messages sent site-wide since local midnight — global cost backstop. */
     public function getDailyMessageCount(): int
     {
-        $since = (new \DateTime('today'))->format('Y-m-d H:i:s');
+        $since = (new \DateTime('today'))->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s');
 
         return (int)MessageRecord::find()
             ->where(['role' => 'user'])

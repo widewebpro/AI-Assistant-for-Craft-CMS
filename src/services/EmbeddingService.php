@@ -44,7 +44,7 @@ class EmbeddingService extends Component
                         'chunkId' => $chunk->id,
                         'embedding' => $embeddingBinary,
                         'model' => $settings->embeddingModel,
-                        'dateCreated' => (new \DateTime())->format('Y-m-d H:i:s'),
+                        'dateCreated' => \craft\helpers\Db::prepareDateForDb(new \DateTime()),
                         'uid' => \craft\helpers\StringHelper::UUID(),
                     ])
                     ->execute();
