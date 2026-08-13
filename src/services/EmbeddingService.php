@@ -10,6 +10,9 @@ use widewebpro\aiagent\records\KnowledgeChunkRecord;
 class EmbeddingService extends Component
 {
     private const BATCH_SIZE = 20;
+    private const RRF_K = 60;
+    private const CANDIDATE_POOL = 20;
+
     public int $searchBatchSize = 500;
 
     /**
@@ -48,23 +51,49 @@ class EmbeddingService extends Component
         }
     }
 
-    /**
-     * Search knowledge base using embeddings with keyword fallback.
-     */
     public function search(string $query, int $limit = 5): array
     {
-        // Try embedding search first.
+        $pool = max(self::CANDIDATE_POOL, $limit);
+
+        $vectorResults = null;
         try {
-            $results = $this->_embeddingSearch($query, $limit);
-            if ($results !== null) {
-                return $results;
-            }
+            $vectorResults = $this->_embeddingSearch($query, $pool);
         } catch (\Throwable $e) {
-            Craft::warning("Embedding search failed, falling back to keyword: " . $e->getMessage(), 'ai-agent');
+            Craft::warning("Embedding search failed, using keyword candidates only: " . $e->getMessage(), 'ai-agent');
         }
 
-        // Fallback: keyword (FULLTEXT) search
-        return $this->_keywordSearch($query, $limit);
+        $keywordResults = [];
+        try {
+            $keywordResults = $this->_keywordSearch($query, $pool);
+        } catch (\Throwable $e) {
+            Craft::warning("Keyword search failed: " . $e->getMessage(), 'ai-agent');
+        }
+
+        return $this->_rrfMerge($vectorResults ?? [], $keywordResults, $limit);
+    }
+
+    private function _rrfMerge(array $vectorResults, array $keywordResults, int $limit): array
+    {
+        $merged = [];
+
+        foreach (['vector' => $vectorResults, 'keyword' => $keywordResults] as $branch => $results) {
+            foreach ($results as $rank => $result) {
+                $id = $result['chunkId'];
+
+                if (!isset($merged[$id])) {
+                    $merged[$id] = $result;
+                    $merged[$id]['score'] = 0.0;
+                    $merged[$id]['matchedBy'] = [];
+                }
+
+                $merged[$id]['score'] += 1 / (self::RRF_K + $rank + 1);
+                $merged[$id]['matchedBy'][] = $branch;
+            }
+        }
+
+        usort($merged, fn($a, $b) => $b['score'] <=> $a['score']);
+
+        return array_slice($merged, 0, $limit);
     }
 
     private function _embeddingSearch(string $query, int $limit): ?array
