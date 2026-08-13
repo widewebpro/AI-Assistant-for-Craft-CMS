@@ -27,7 +27,7 @@ class EmbeddingService extends Component
         $batches = array_chunk($chunkRecords, self::BATCH_SIZE);
 
         foreach ($batches as $batch) {
-            $texts = array_map(fn($c) => $c->content, $batch);
+            $texts = array_map(fn($c) => $this->_embeddingInput($c), $batch);
             $embeddings = $provider->embedBatch($texts);
 
             if (count($embeddings) < count($batch)) {
@@ -250,6 +250,19 @@ class EmbeddingService extends Component
             'chunkId' => $r['chunkId'],
             'score' => (float)$r['score'],
         ], $results);
+    }
+
+    private function _embeddingInput($chunk): string
+    {
+        $meta = $chunk->metadata;
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true);
+        }
+        $meta = is_array($meta) ? $meta : [];
+
+        $prefix = implode(' — ', array_filter([$meta['filename'] ?? null, $meta['heading'] ?? null]));
+
+        return $prefix === '' ? $chunk->content : $prefix . ":\n" . $chunk->content;
     }
 
     /** Scale a vector to unit length; zero vectors are returned unchanged. */

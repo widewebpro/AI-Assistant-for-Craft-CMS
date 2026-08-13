@@ -160,13 +160,16 @@ class KnowledgeBaseService extends Component
 
         // Save chunks to DB
         $chunkRecords = [];
-        foreach ($chunks as $i => $chunkText) {
+        foreach ($chunks as $i => $chunkData) {
             $chunk = new KnowledgeChunkRecord();
             $chunk->fileId = $record->id;
-            $chunk->content = $chunkText;
+            $chunk->content = $chunkData['content'];
             $chunk->chunkIndex = $i;
-            $chunk->tokenCount = $this->_estimateTokens($chunkText);
-            $chunk->metadata = json_encode(['filename' => $record->originalName]);
+            $chunk->tokenCount = $this->_estimateTokens($chunkData['content']);
+            $chunk->metadata = array_filter([
+                'filename' => $record->originalName,
+                'heading' => $chunkData['heading'],
+            ]);
             $chunk->uid = StringHelper::UUID();
             $chunk->save(false);
             $chunkRecords[] = $chunk;
@@ -248,14 +251,50 @@ class KnowledgeBaseService extends Component
         return '';
     }
 
-    /**
-     * Recursive text chunking: split by paragraphs first, then sentences, with overlap.
-     */
     private function _chunkText(string $text): array
     {
         $text = preg_replace('/\r\n?/', "\n", $text);
         $text = preg_replace('/\n{3,}/', "\n\n", $text);
 
+        $chunks = [];
+        foreach ($this->_splitByHeadings($text) as $section) {
+            foreach ($this->_chunkSection($section['body']) as $content) {
+                $chunks[] = ['content' => $content, 'heading' => $section['heading']];
+            }
+        }
+
+        return $chunks;
+    }
+
+    private function _splitByHeadings(string $text): array
+    {
+        $parts = preg_split('/^(#{1,6}[ \t]+\S.*)$/m', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+        $sections = [];
+        $heading = null;
+        $body = '';
+
+        foreach ($parts as $i => $part) {
+            if ($i % 2 === 1) {
+                if (trim($body) !== '') {
+                    $sections[] = ['heading' => $heading, 'body' => $body];
+                }
+                $heading = trim(ltrim($part, "# \t"));
+                $body = $part;
+            } else {
+                $body .= $part;
+            }
+        }
+
+        if (trim($body) !== '') {
+            $sections[] = ['heading' => $heading, 'body' => $body];
+        }
+
+        return $sections ?: [['heading' => null, 'body' => $text]];
+    }
+
+    private function _chunkSection(string $text): array
+    {
         $paragraphs = preg_split('/\n\n+/', $text);
         $chunks = [];
         $currentChunk = '';
