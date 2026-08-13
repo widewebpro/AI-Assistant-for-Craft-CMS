@@ -13,7 +13,6 @@ class Install extends Migration
         $this->_createKnowledgeFilesTable();
         $this->_createKnowledgeChunksTable();
         $this->_createEmbeddingsTable();
-        $this->_createPageRulesTable();
 
         return true;
     }
@@ -120,18 +119,4 @@ class Install extends Migration
         $this->createIndex(null, '{{%aiagent_embeddings}}', ['chunkId'], true);
     }
 
-    private function _createPageRulesTable(): void
-    {
-        $this->createTable('{{%aiagent_page_rules}}', [
-            'id' => $this->primaryKey(),
-            'pattern' => $this->string(500)->notNull(),
-            'ruleType' => $this->string(20)->notNull()->defaultValue('include'),
-            'sortOrder' => $this->integer()->notNull()->defaultValue(0),
-            'dateCreated' => $this->dateTime()->notNull(),
-            'dateUpdated' => $this->dateTime()->notNull(),
-            'uid' => $this->uid(),
-        ]);
-
-        $this->createIndex(null, '{{%aiagent_page_rules}}', ['sortOrder']);
-    }
 }

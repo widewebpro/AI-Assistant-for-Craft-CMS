@@ -5,8 +5,6 @@ namespace widewebpro\aiagent\controllers;
 use Craft;
 use craft\web\Controller;
 use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\ConversationRecord;
-use yii\db\Expression;
 use yii\web\Response;
 
 class PagesController extends Controller
@@ -23,14 +21,9 @@ class PagesController extends Controller
 
     public function actionIndex(): Response
     {
-        $rules = (new \yii\db\Query())
-            ->from('{{%aiagent_page_rules}}')
-            ->orderBy(['sortOrder' => SORT_ASC])
-            ->all();
-
         return $this->renderTemplate('ai-agent/settings/pages', [
             'plugin' => Plugin::getInstance(),
-            'rules' => $rules,
+            'rules' => Plugin::getInstance()->getSettings()->pageRules,
         ]);
     }
 
@@ -42,28 +35,25 @@ class PagesController extends Controller
         $patterns = $request->getBodyParam('patterns', []);
         $ruleTypes = $request->getBodyParam('ruleTypes', []);
 
-        Craft::$app->getDb()->createCommand()
-            ->delete('{{%aiagent_page_rules}}')
-            ->execute();
-
-        $now = (new \DateTime())->format('Y-m-d H:i:s');
-
+        $rules = [];
         foreach ($patterns as $i => $pattern) {
-            $pattern = trim($pattern);
-            if (empty($pattern)) {
+            $pattern = trim((string)$pattern);
+            if ($pattern === '') {
                 continue;
             }
+            $rules[] = [
+                'pattern' => $pattern,
+                'ruleType' => ($ruleTypes[$i] ?? 'include') === 'exclude' ? 'exclude' : 'include',
+            ];
+        }
 
-            Craft::$app->getDb()->createCommand()
-                ->insert('{{%aiagent_page_rules}}', [
-                    'pattern' => $pattern,
-                    'ruleType' => $ruleTypes[$i] ?? 'include',
-                    'sortOrder' => $i,
-                    'dateCreated' => $now,
-                    'dateUpdated' => $now,
-                    'uid' => \craft\helpers\StringHelper::UUID(),
-                ])
-                ->execute();
+        $plugin = Plugin::getInstance();
+        $settings = $plugin->getSettings();
+        $settings->pageRules = $rules;
+
+        if (!Craft::$app->getPlugins()->savePluginSettings($plugin, $settings->toArray())) {
+            Craft::$app->getSession()->setError('Could not save page rules.');
+            return null;
         }
 
         Craft::$app->getSession()->setNotice('Page rules saved.');

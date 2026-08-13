@@ -32,6 +32,7 @@ class Settings extends Model
     public string $customCss = '';
     public string $customJs = '';
     public string $corsAllowedOrigins = '';
+    public array $pageRules = [];
 
     // Restrictions
     public string $allowedTopics = '';
@@ -76,6 +77,9 @@ class Settings extends Model
         }
         if (!is_array($this->escalationFieldMap)) {
             $this->escalationFieldMap = [];
+        }
+        if (!is_array($this->pageRules)) {
+            $this->pageRules = [];
         }
 
         if (empty($this->escalationFields)) {

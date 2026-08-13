@@ -89,11 +89,7 @@ HTML;
 
     public function shouldShowOnPath(string $path): bool
     {
-        $rules = (new \yii\db\Query())
-            ->select(['pattern', 'ruleType'])
-            ->from('{{%aiagent_page_rules}}')
-            ->orderBy(['sortOrder' => SORT_ASC])
-            ->all();
+        $rules = Plugin::getInstance()->getSettings()->pageRules;
 
         if (empty($rules)) {
             return true;
@@ -101,7 +97,7 @@ HTML;
 
         $hasIncludes = false;
         foreach ($rules as $rule) {
-            if ($rule['ruleType'] === 'include') {
+            if (($rule['ruleType'] ?? '') === 'include') {
                 $hasIncludes = true;
                 break;
             }
@@ -109,8 +105,8 @@ HTML;
 
         $allowed = !$hasIncludes;
         foreach ($rules as $rule) {
-            if ($this->_matchGlob($rule['pattern'], $path)) {
-                $allowed = $rule['ruleType'] === 'include';
+            if ($this->_matchGlob((string)($rule['pattern'] ?? ''), $path)) {
+                $allowed = ($rule['ruleType'] ?? '') === 'include';
             }
         }
 
