@@ -19,6 +19,18 @@ class WebhookService extends Component
      * @param array $conversationMeta Optional conversation metadata (id, sessionId, pageUrl, etc.)
      * @return array Results per action: [ ['name' => ..., 'success' => bool, 'status' => int, 'error' => string|null], ... ]
      */
+    /** Whether any action would actually fire — lets callers skip queueing a no-op job. */
+    public function hasEnabledActions(): bool
+    {
+        foreach (Plugin::getInstance()->getSettings()->escalationActions ?? [] as $action) {
+            if (!empty($action['enabled']) && !empty($action['url'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function fireActions(array $contactData, array $conversationMeta = []): array
     {
         $settings = Plugin::getInstance()->getSettings();

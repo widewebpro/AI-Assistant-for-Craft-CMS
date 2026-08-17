@@ -80,9 +80,6 @@ class ChatApiController extends Controller
                 $tokensUsed += ($step['total_tokens'] ?? 0);
             }
 
-            // Save assistant message. Arrays, not json_encode: the columns are
-            // json-typed, so the record layer encodes — a pre-encoded string
-            // gets encoded twice and stores a JSON string scalar.
             $assistantMsg = $plugin->chat->addMessage($conversation->id, 'assistant', $result['text'], [
                 'toolCalls' => $result['tool_calls'] ?: null,
                 'toolResults' => $result['tool_results'] ?: null,
@@ -225,7 +222,6 @@ class ChatApiController extends Controller
 
     /**
      * GET /ai-agent/widget-config — Widget configuration for headless front ends.
-     * Page rules stay on the server; pass ?path=/some/page to get a 'showOnPage' verdict.
      */
     public function actionWidgetConfig(): Response
     {
@@ -307,20 +303,18 @@ class ChatApiController extends Controller
 
         $plugin->chat->addMessage($conversation->id, 'system', 'Escalation form submitted: ' . json_encode($contactData));
 
-        // Fire webhook actions
-        $conversationMeta = [
-            'conversationId' => $conversation->id,
-            'sessionId' => $sessionId,
-            'pageUrl' => $conversation->pageUrl ?? '',
-            'ipAddress' => $conversation->ipAddress ?? '',
-            'escalatedAt' => date('c'),
-        ];
-        $webhookResults = $plugin->webhook->fireActions($contactData, $conversationMeta);
-
-        if (!empty($webhookResults)) {
-            $metadata['webhookResults'] = $webhookResults;
-            $conversation->metadata = $metadata;
-            $conversation->save(false);
+        if ($plugin->webhook->hasEnabledActions()) {
+            Craft::$app->getQueue()->push(new \widewebpro\aiagent\jobs\FireEscalationWebhooksJob([
+                'conversationId' => $conversation->id,
+                'contactData' => $contactData,
+                'conversationMeta' => [
+                    'conversationId' => $conversation->id,
+                    'sessionId' => $sessionId,
+                    'pageUrl' => $conversation->pageUrl ?? '',
+                    'ipAddress' => $conversation->ipAddress ?? '',
+                    'escalatedAt' => date('c'),
+                ],
+            ]));
         }
 
         Craft::info("Escalation form submitted for conversation {$conversation->id}", 'ai-agent');
