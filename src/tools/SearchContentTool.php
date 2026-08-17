@@ -53,23 +53,19 @@ class SearchContentTool extends BaseTool
 
         $limit = min(max((int)($params['limit'] ?? 5), 1), self::MAX_RESULTS);
 
-        $entryQuery = Entry::find()
-            ->search($query)
-            ->status(Entry::STATUS_LIVE)
-            ->uri(':notempty:')
-            ->orderBy('score')
-            ->limit($limit);
-
         $sections = $this->_allowedSections($settings->contentSearchSections);
-        if ($sections !== null) {
-            if ($sections === []) {
-                return json_encode(['message' => 'No matching site content found.']);
-            }
-            $entryQuery->section($sections);
+        if ($sections === []) {
+            return json_encode(['message' => 'No matching site content found.']);
+        }
+
+        $entries = $this->_search($query, $limit, $sections);
+
+        if ($entries === [] && ($orQuery = $this->_orQuery($query)) !== null) {
+            $entries = $this->_search($orQuery, $limit, $sections);
         }
 
         $results = [];
-        foreach ($entryQuery->all() as $entry) {
+        foreach ($entries as $entry) {
             $results[] = array_filter([
                 'title' => $entry->title,
                 'url' => $entry->getUrl(),
@@ -86,8 +82,38 @@ class SearchContentTool extends BaseTool
     }
 
     /**
-     * Whitelist from the settings
+     * @return Entry[]
      */
+    private function _search(string $search, int $limit, ?array $sections): array
+    {
+        $entryQuery = Entry::find()
+            ->search($search)
+            ->status(Entry::STATUS_LIVE)
+            ->uri(':notempty:')
+            ->orderBy('score')
+            ->limit($limit);
+
+        if ($sections !== null) {
+            $entryQuery->section($sections);
+        }
+
+        return $entryQuery->all();
+    }
+
+    private function _orQuery(string $query): ?string
+    {
+        $terms = [];
+        foreach (preg_split('/\s+/', $query) ?: [] as $term) {
+            $term = trim($term, '"\'*-');
+            if ($term === '' || in_array(strtolower($term), ['or', 'and', 'not'], true)) {
+                continue;
+            }
+            $terms[] = $term;
+        }
+
+        return count($terms) >= 2 ? implode(' OR ', array_unique($terms)) : null;
+    }
+
     private function _allowedSections(string $configured): ?array
     {
         $handles = array_values(array_filter(array_map('trim', preg_split('/[\r\n,]+/', $configured))));
