@@ -150,7 +150,7 @@
 
                 {{ forms.textareaField({
                     label: "Custom CSS",
-                    instructions: "Additional CSS injected into the widget's Shadow DOM.",
+                    instructions: "Additional CSS injected into the widget's Shadow DOM, after the theme styles — it wins over them. Target the widget's own classes: `.ai-widget`, `.ai-toggle`, `.ai-header`, `.ai-bubble`, `.ai-input`… Applies to the live widget on your site; this page's preview does not reflect it.",
                     id: "customCss",
                     name: "customCss",
                     value: settings.customCss,
@@ -160,7 +160,7 @@
 
                 {{ forms.textareaField({
                     label: "Custom JavaScript",
-                    instructions: "Additional JS executed after widget initialization.",
+                    instructions: "Runs once, right after the widget initializes on your site (not in this preview). The widget lives in a Shadow DOM, so `document.querySelector` cannot see it — use the provided `widget` variable instead, e.g. `widget.querySelector('.ai-toggle')`.",
                     id: "customJs",
                     name: "customJs",
                     value: settings.customJs,

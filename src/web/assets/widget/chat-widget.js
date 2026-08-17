@@ -130,7 +130,11 @@
 
   // Custom JS
   if (config.customJs) {
-    try { new Function(config.customJs)(); } catch (e) { console.warn('AI Agent custom JS error:', e); }
+    try {
+      new Function('widget', config.customJs)(shadow);
+    } catch (e) {
+      console.warn('AI Agent custom JS error:', e);
+    }
   }
 
   // ─── Functions ──────────────────────────────────────
