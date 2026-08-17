@@ -222,16 +222,115 @@ class KnowledgeBaseService extends Component
 
     private function _extractDocx(string $filePath): string
     {
-        $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
-        $text = '';
+        $sanitized = $this->_sanitizeDocxForPhpWord($filePath);
 
-        foreach ($phpWord->getSections() as $section) {
-            foreach ($section->getElements() as $element) {
-                $text .= $this->_extractPhpWordElement($element) . "\n";
+        try {
+            try {
+                $phpWord = \PhpOffice\PhpWord\IOFactory::load($sanitized ?? $filePath);
+            } catch (\Throwable $e) {
+                Craft::warning("PhpWord could not read \"{$filePath}\", falling back to raw XML extraction: " . $e->getMessage(), 'ai-agent');
+                return $this->_extractDocxRaw($filePath);
+            }
+
+            $text = '';
+            foreach ($phpWord->getSections() as $section) {
+                foreach ($section->getElements() as $element) {
+                    $text .= $this->_extractPhpWordElement($element) . "\n";
+                }
+            }
+
+            return $text;
+        } finally {
+            if ($sanitized !== null) {
+                @unlink($sanitized);
+            }
+        }
+    }
+
+    private function _sanitizeDocxForPhpWord(string $filePath): ?string
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($filePath) !== true) {
+            return null;
+        }
+        $xml = $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        if ($xml === false
+            || (!str_contains($xml, '<m:oMath')
+                && !str_contains($xml, '<w:drawing')
+                && !str_contains($xml, '<w:pict')
+                && !str_contains($xml, '<w:object'))
+        ) {
+            return null;
+        }
+
+        $dom = new \DOMDocument();
+        if (!@$dom->loadXML($xml)) {
+            return null;
+        }
+
+        $wNs = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+        $xpath = new \DOMXPath($dom);
+        $xpath->registerNamespace('m', 'http://schemas.openxmlformats.org/officeDocument/2006/math');
+        $xpath->registerNamespace('w', $wNs);
+
+        // oMathPara first: it takes its nested oMath along, so the second
+        // query only sees bare formulas.
+        foreach (['//m:oMathPara', '//m:oMath'] as $query) {
+            foreach (iterator_to_array($xpath->query($query)) as $math) {
+                $text = '';
+                foreach ($xpath->query('.//m:t', $math) as $t) {
+                    $text .= $t->textContent;
+                }
+                $run = $dom->createElementNS($wNs, 'w:r');
+                $wt = $dom->createElementNS($wNs, 'w:t');
+                $wt->setAttribute('xml:space', 'preserve');
+                $wt->appendChild($dom->createTextNode(' ' . $text . ' '));
+                $run->appendChild($wt);
+                $math->parentNode->replaceChild($run, $math);
             }
         }
 
-        return $text;
+        foreach (['//w:drawing', '//w:pict', '//w:object'] as $query) {
+            foreach (iterator_to_array($xpath->query($query)) as $node) {
+                $node->parentNode->removeChild($node);
+            }
+        }
+
+        $tmpPath = tempnam(sys_get_temp_dir(), 'aiagent-docx');
+        if ($tmpPath === false || !copy($filePath, $tmpPath)) {
+            return null;
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($tmpPath) !== true) {
+            @unlink($tmpPath);
+            return null;
+        }
+        $zip->addFromString('word/document.xml', $dom->saveXML());
+        $zip->close();
+
+        return $tmpPath;
+    }
+
+    private function _extractDocxRaw(string $filePath): string
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($filePath) !== true) {
+            return '';
+        }
+        $xml = $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        if ($xml === false) {
+            return '';
+        }
+
+        $text = preg_replace('/<\/w:p>/', "\n", $xml);
+        $text = strip_tags($text);
+
+        return html_entity_decode($text, ENT_QUOTES | ENT_XML1, 'UTF-8');
     }
 
     private function _extractPhpWordElement($element): string
