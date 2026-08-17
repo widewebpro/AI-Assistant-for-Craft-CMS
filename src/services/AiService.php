@@ -505,9 +505,14 @@ class AiService extends Component
         $prompt .= "2. Also call get_business_info if asking about the company, contact info, hours, etc.\n";
         $prompt .= "3. Call get_page_context when the user asks about the page they are on (\"this page\", \"here\",\n";
         $prompt .= "   what it says or shows) or when the question clearly relates to it.\n";
-        $prompt .= "4. Call list_knowledge_topics if unsure what information is available.\n";
-        $prompt .= "5. You CAN call multiple tools in a single response.\n";
-        $prompt .= "6. When in doubt about WHICH tool to use, call search_knowledge_base — better to search and find\n";
+        if ($settings->contentSearchEnabled) {
+            $prompt .= "4. Call search_site_content when the user asks what pages, articles or products exist on this\n";
+            $prompt .= "   website, or where to find something on the site (\"do you have a page about…\", \"where can\n";
+            $prompt .= "   I read about…\").\n";
+        }
+        $prompt .= "5. Call list_knowledge_topics if unsure what information is available.\n";
+        $prompt .= "6. You CAN call multiple tools in a single response.\n";
+        $prompt .= "7. When in doubt about WHICH tool to use, call search_knowledge_base — better to search and find\n";
         $prompt .= "   nothing than to skip it. This never overrides the scope gate: an out-of-scope message is\n";
         $prompt .= "   [OFF_TOPIC], not a search.\n";
 

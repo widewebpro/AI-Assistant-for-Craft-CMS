@@ -130,4 +130,28 @@
             size: 10,
         }) }}
     </div>
+
+    <div class="pane" style="margin-bottom: 24px;">
+        <h2>Site Content Search</h2>
+        <p class="light">Lets the agent search the site's own entries (pages, articles, products) through Craft's search index, alongside the file-based knowledge base.</p>
+
+        {{ forms.lightswitchField({
+            label: "Enable Site Content Search",
+            instructions: "Adds the search_site_content tool. Only live entries with a public URL are ever returned.",
+            id: "contentSearchEnabled",
+            name: "contentSearchEnabled",
+            on: settings.contentSearchEnabled,
+        }) }}
+
+        {{ forms.textareaField({
+            label: "Searchable Sections",
+            instructions: "Section handles the agent may search, one per line. Leave empty to allow every section with public URLs.",
+            id: "contentSearchSections",
+            name: "contentSearchSections",
+            value: settings.contentSearchSections,
+            rows: 4,
+            class: "code fullwidth",
+            placeholder: "blog\nproducts",
+        }) }}
+    </div>
 {% endblock %}

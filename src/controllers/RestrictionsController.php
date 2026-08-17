@@ -44,6 +44,8 @@ class RestrictionsController extends Controller
         $settings->rateLimitPerMinutePerIp = (int)$request->getBodyParam('rateLimitPerMinutePerIp', 30);
         $settings->dailyMessageLimit = (int)$request->getBodyParam('dailyMessageLimit', 0);
         $settings->searchMinScore = (float)$request->getBodyParam('searchMinScore', 0.3);
+        $settings->contentSearchEnabled = (bool)$request->getBodyParam('contentSearchEnabled', false);
+        $settings->contentSearchSections = $request->getBodyParam('contentSearchSections', '');
 
         if (!Craft::$app->getPlugins()->savePluginSettings($plugin, $settings->toArray())) {
             Craft::$app->getSession()->setError('Could not save restriction settings.');

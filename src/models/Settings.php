@@ -44,6 +44,8 @@ class Settings extends Model
     public int $rateLimitPerMinutePerIp = 30;
     public int $dailyMessageLimit = 0;
     public float $searchMinScore = 0.3;
+    public bool $contentSearchEnabled = true;
+    public string $contentSearchSections = '';
 
     // Escalation
     public bool $escalationEnabled = true;

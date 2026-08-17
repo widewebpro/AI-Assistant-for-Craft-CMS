@@ -9,6 +9,7 @@ use widewebpro\aiagent\tools\SearchKnowledgeBaseTool;
 use widewebpro\aiagent\tools\GetPageContextTool;
 use widewebpro\aiagent\tools\GetBusinessInfoTool;
 use widewebpro\aiagent\tools\ListKnowledgeTopicsTool;
+use widewebpro\aiagent\tools\SearchContentTool;
 use widewebpro\aiagent\tools\EscalateTool;
 
 class ToolRegistry extends Component
@@ -42,6 +43,9 @@ class ToolRegistry extends Component
         $this->register(new ListKnowledgeTopicsTool());
 
         $settings = \widewebpro\aiagent\Plugin::getInstance()?->getSettings();
+        if ($settings && $settings->contentSearchEnabled) {
+            $this->register(new SearchContentTool());
+        }
         if ($settings && $settings->escalationEnabled) {
             $this->register(new EscalateTool());
         }
