@@ -33,6 +33,20 @@ class KnowledgeBaseController extends Controller
         ]);
     }
 
+    public function actionStatuses(): Response
+    {
+        $this->requireAcceptsJson();
+
+        return $this->asJson([
+            'files' => array_map(fn(array $row) => [
+                'id' => (int)$row['id'],
+                'status' => $row['status'],
+                'chunks' => (int)$row['chunkCount'],
+                'stuck' => $row['isStuck'],
+            ], $this->_fileRows()),
+        ]);
+    }
+
     /** File rows for the CP list; 'processing' older than STUCK_AFTER_MINUTES is flagged stuck. */
     private function _fileRows(): array
     {

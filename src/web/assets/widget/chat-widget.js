@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  window.__aiAgentBuildStyles = buildStyles;
+
   var config = window.__aiAgentConfig;
   if (!config || !config.enabled) return;
 
@@ -552,14 +554,18 @@
   }
 
   function getStyles() {
-    var t = config.theme || {};
+    return buildStyles(config.theme || {}, config.position || 'bottom-right');
+  }
+
+  function buildStyles(t, pos) {
     var primary = t.primaryColor || '#2563eb';
     var secondary = t.secondaryColor || '#f3f4f6';
     var bg = t.backgroundColor || '#ffffff';
     var primaryText = t.primaryTextColor || '#ffffff';
     var text = t.secondaryTextColor || '#1f2937';
-    var font = t.fontFamily || '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    var pos = config.position || 'bottom-right';
+    var font =
+      t.fontFamily ||
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     var posRight = pos === 'bottom-right' ? '20px' : 'auto';
     var posLeft = pos === 'bottom-left' ? '20px' : 'auto';
 

@@ -23,9 +23,12 @@ class AppearanceController extends Controller
 
     public function actionIndex(): Response
     {
+        $result = Craft::$app->getAssetManager()->publish(dirname(__DIR__) . '/web/assets/widget');
+
         return $this->renderTemplate('ai-agent/settings/appearance', [
             'plugin' => Plugin::getInstance(),
             'settings' => Plugin::getInstance()->getSettings(),
+            'widgetJsUrl' => $result[1] . '/chat-widget.js',
         ]);
     }
 

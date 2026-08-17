@@ -26,6 +26,14 @@
                    style="display: none;">
         </div>
         <div id="kb-file-list" style="display: none; margin-bottom: 16px;"></div>
+<style>
+	#kb-upload-btn[disabled] {
+		opacity: 0.4;
+		cursor: not-allowed;
+	}
+</style>
+
+
         <button type="submit" class="btn submit" id="kb-upload-btn" disabled>Upload & Process</button>
     </form>
 </div>
@@ -48,12 +56,16 @@
         </thead>
         <tbody>
             {% for file in files %}
-            <tr>
+<tr data-kb-file="{{ file.id }}"></tr>
+
+
                 <td><strong>{{ file.originalName }}</strong></td>
                 <td>{{ file.mimeType }}</td>
                 <td>{{ (file.fileSize / 1024) | round(1) }} KB</td>
-                <td>{{ file.chunkCount }}</td>
-                <td>
+<td data-kb-chunks>{{ file.chunkCount }}</td>
+<td data-kb-status data-status="{{ file.isStuck ? 'stuck' : file.status }}"></td>
+
+
                     {% if file.isStuck %}
                         <span class="status expired"></span> Stuck
                         <span class="info">Still “processing” since {{ file.dateUpdated }} — the worker likely died before finishing. Its chunks are invisible to search. Use Reprocess.</span>
@@ -106,6 +118,45 @@
         for (var i = 0; i < files.length; i++) { html += '<div style="padding: 8px 0; border-bottom: 1px solid #f3f4f6;">' + files[i].name + ' <span class="light">(' + (files[i].size / 1024).toFixed(1) + ' KB)</span></div>'; }
         fileList.innerHTML = html;
     }
+var statusUrl =
+{{ actionUrl('ai-agent/knowledge-base/statuses') | json_encode | raw }};
+    var statusClasses = { ready: 'live', error: 'expired', stuck: 'expired', processing: 'pending' };
+    var statusLabels = { ready: 'Ready', error: 'Error', stuck: 'Stuck', processing: 'Processing' };
+    var pollTimer = null;
+
+    function hasProcessingRows() {
+        return document.querySelector('[data-kb-status][data-status="processing"]') !== null;
+    }
+
+    function applyStatuses(files) {
+        files.forEach(function(f) {
+            var row = document.querySelector('tr[data-kb-file="' + f.id + '"]');
+            if (!row) return;
+            var display = f.stuck ? 'stuck' : f.status;
+            var statusCell = row.querySelector('[data-kb-status]');
+            if (statusCell.getAttribute('data-status') === display) return;
+            statusCell.setAttribute('data-status', display);
+            statusCell.innerHTML = '<span class="status ' + (statusClasses[display] || 'pending') + '"></span>
+' + (statusLabels[display] || display);
+            row.querySelector('[data-kb-chunks]').textContent = f.chunks;
+        });
+    }
+
+    function pollStatuses() {
+        fetch(statusUrl, { headers: { 'Accept': 'application/json' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                applyStatuses(data.files || []);
+                if (!hasProcessingRows()) { clearInterval(pollTimer); pollTimer = null; }
+            })
+            .catch(function() { /* transient — next tick retries */ });
+    }
+
+    if (hasProcessingRows()) {
+        pollTimer = setInterval(pollStatuses, 3000);
+    }
+
+
 })();
 {% endjs %}
 {% endblock %}
