@@ -201,6 +201,7 @@
 
     var fullText = '';
     var bubbleEl = null;
+    var finished = false;
 
     var eventSource = new EventSource(url);
 
@@ -237,13 +238,40 @@
     });
 
     eventSource.addEventListener('error', function (e) {
-      var data;
-      try { data = JSON.parse(e.data); } catch (ex) { data = { message: config.errorMessage || 'An error occurred.' }; }
+      if (e.data !== undefined) {
+        var data;
+        try {
+          data = JSON.parse(e.data);
+        } catch (ex) {
+          data = {};
+        }
+        if (!bubbleEl && typingEl.parentNode) {
+          messagesEl.removeChild(typingEl);
+        }
+        addBotMessage(
+          data.message || config.errorMessage || 'An error occurred.',
+        );
+        finished = true;
+        isStreaming = false;
+        eventSource.close();
+        return;
+      }
 
-      if (!bubbleEl) {
+      if (finished) {
+        return;
+      }
+      finished = true;
+      if (typingEl.parentNode) {
         messagesEl.removeChild(typingEl);
       }
-      addBotMessage(data.message || 'An error occurred.');
+      if (!fullText) {
+        addBotMessage(
+          config.errorMessage || 'Connection lost. Please try again.',
+        );
+      } else {
+        messages.push({ role: 'assistant', content: fullText });
+        saveMessages();
+      }
       isStreaming = false;
       eventSource.close();
     });
@@ -264,23 +292,10 @@
         saveMessages();
       }
 
+      finished = true;
       isStreaming = false;
       eventSource.close();
     });
-
-    eventSource.onerror = function () {
-      if (typingEl.parentNode) {
-        messagesEl.removeChild(typingEl);
-      }
-      if (!fullText) {
-        addBotMessage(config.errorMessage || 'Connection lost. Please try again.');
-      } else {
-        messages.push({ role: 'assistant', content: fullText });
-        saveMessages();
-      }
-      isStreaming = false;
-      eventSource.close();
-    };
   }
 
   function showEscalationForm() {
