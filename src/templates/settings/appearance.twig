@@ -77,11 +77,20 @@
                 </div>
 
                 <div class="field">
-                    <div class="heading"><label for="textColor">Text Color</label></div>
-                    <div class="instructions"><p>Default text color.</p></div>
+                    <div class="heading"><label for="primaryTextColor">Primary Text Color</label></div>
+                    <div class="instructions"><p>Text on primary-colored surfaces: header, your visitors' message bubbles, buttons.</p></div>
                     <div class="input" style="display: flex; gap: 8px; align-items: center;">
-                        <input type="color" id="textColor" name="textColor" value="{{ settings.textColor ?: '#1f2937' }}" style="width: 50px; height: 36px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; padding: 2px;">
-                        <input type="text" id="textColorText" value="{{ settings.textColor ?: '#1f2937' }}" class="text" style="width: 100px; font-family: monospace;" maxlength="7">
+                        <input type="color" id="primaryTextColor" name="primaryTextColor" value="{{ settings.primaryTextColor ?: '#ffffff' }}" style="width: 50px; height: 36px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; padding: 2px;">
+                        <input type="text" id="primaryTextColorText" value="{{ settings.primaryTextColor ?: '#ffffff' }}" class="text" style="width: 100px; font-family: monospace;" maxlength="7">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="heading"><label for="secondaryTextColor">Secondary Text Color</label></div>
+                    <div class="instructions"><p>Text in the agent's message bubbles and the rest of the panel.</p></div>
+                    <div class="input" style="display: flex; gap: 8px; align-items: center;">
+                        <input type="color" id="secondaryTextColor" name="secondaryTextColor" value="{{ settings.secondaryTextColor ?: '#1f2937' }}" style="width: 50px; height: 36px; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; padding: 2px;">
+                        <input type="text" id="secondaryTextColorText" value="{{ settings.secondaryTextColor ?: '#1f2937' }}" class="text" style="width: 100px; font-family: monospace;" maxlength="7">
                     </div>
                 </div>
             </div>
@@ -193,7 +202,7 @@
 
 {% js %}
 (function() {
-    var colorFields = ['primaryColor', 'secondaryColor', 'backgroundColor', 'textColor'];
+    var colorFields = ['primaryColor', 'secondaryColor', 'backgroundColor', 'primaryTextColor', 'secondaryTextColor'];
     colorFields.forEach(function(id) {
         var picker = document.getElementById(id);
         var textInput = document.getElementById(id + 'Text');
@@ -206,15 +215,22 @@
         var p = document.getElementById('primaryColor').value || '#2563eb';
         var s = document.getElementById('secondaryColor').value || '#f3f4f6';
         var bg = document.getElementById('backgroundColor').value || '#ffffff';
-        var t = document.getElementById('textColor').value || '#1f2937';
+        var pt = document.getElementById('primaryTextColor').value || '#ffffff';
+        var st = document.getElementById('secondaryTextColor').value || '#1f2937';
         document.getElementById('preview-header').style.backgroundColor = p;
+        document.getElementById('preview-header').style.color = pt;
         document.getElementById('preview-body').style.backgroundColor = bg;
-        document.getElementById('preview-body').style.color = t;
+        document.getElementById('preview-body').style.color = st;
         document.getElementById('preview-welcome').style.backgroundColor = s;
+        document.getElementById('preview-welcome').style.color = st;
         document.getElementById('preview-bot-msg').style.backgroundColor = s;
+        document.getElementById('preview-bot-msg').style.color = st;
         document.getElementById('preview-user-msg').style.backgroundColor = p;
+        document.getElementById('preview-user-msg').style.color = pt;
         document.getElementById('preview-input').style.backgroundColor = bg;
+        document.getElementById('widget-preview').style.fontFamily = document.getElementById('fontFamily').value;
     }
+    document.getElementById('fontFamily').addEventListener('change', updatePreview);
     document.getElementById('welcomeMessage').addEventListener('input', function() { document.getElementById('preview-welcome').textContent = this.value; });
     document.getElementById('placeholderText').addEventListener('input', function() { document.getElementById('preview-placeholder').textContent = this.value; });
 

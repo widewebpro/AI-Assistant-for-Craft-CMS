@@ -40,7 +40,8 @@ class AppearanceController extends Controller
         $settings->primaryColor = $this->_ensureHexColor($request->getBodyParam('primaryColor'), '#2563eb');
         $settings->secondaryColor = $this->_ensureHexColor($request->getBodyParam('secondaryColor'), '#f3f4f6');
         $settings->backgroundColor = $this->_ensureHexColor($request->getBodyParam('backgroundColor'), '#ffffff');
-        $settings->textColor = $this->_ensureHexColor($request->getBodyParam('textColor'), '#1f2937');
+        $settings->primaryTextColor = $this->_ensureHexColor($request->getBodyParam('primaryTextColor'), '#ffffff');
+        $settings->secondaryTextColor = $this->_ensureHexColor($request->getBodyParam('secondaryTextColor'), '#1f2937');
         $settings->fontFamily = $request->getBodyParam('fontFamily') ?: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
         $settings->widgetPosition = $request->getBodyParam('widgetPosition', 'bottom-right');
         $settings->welcomeMessage = $request->getBodyParam('welcomeMessage') ?: 'Hello! How can I help you today?';

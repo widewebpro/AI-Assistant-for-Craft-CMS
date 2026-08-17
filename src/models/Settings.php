@@ -23,7 +23,8 @@ class Settings extends Model
     public string $primaryColor = '#2563eb';
     public string $secondaryColor = '#f3f4f6';
     public string $backgroundColor = '#ffffff';
-    public string $textColor = '#1f2937';
+    public string $primaryTextColor = '#ffffff';
+    public string $secondaryTextColor = '#1f2937';
     public string $fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     public string $widgetPosition = 'bottom-right'; // bottom-right | bottom-left
     public string $welcomeMessage = 'Hello! How can I help you today?';
@@ -70,7 +71,8 @@ class Settings extends Model
         $this->primaryColor = $this->_normalizeColor($this->primaryColor, '#2563eb');
         $this->secondaryColor = $this->_normalizeColor($this->secondaryColor, '#f3f4f6');
         $this->backgroundColor = $this->_normalizeColor($this->backgroundColor, '#ffffff');
-        $this->textColor = $this->_normalizeColor($this->textColor, '#1f2937');
+        $this->primaryTextColor = $this->_normalizeColor($this->primaryTextColor, '#ffffff');
+        $this->secondaryTextColor = $this->_normalizeColor($this->secondaryTextColor, '#1f2937');
 
         if (!is_array($this->escalationFields)) {
             $this->escalationFields = [];
