@@ -140,6 +140,9 @@ class SearchContentTool extends BaseTool
             } catch (\Throwable) {
                 continue;
             }
+            if ($value instanceof \craft\elements\db\ElementQuery) {
+                continue;
+            }
             if (is_string($value) || is_numeric($value) || $value instanceof \Stringable) {
                 $value = trim(strip_tags((string)$value));
                 if ($value !== '') {

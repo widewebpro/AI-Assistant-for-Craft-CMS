@@ -18,6 +18,8 @@ class AiService extends Component
         $provider = Plugin::getInstance()->provider;
         $toolRegistry = Plugin::getInstance()->tools;
 
+        $conversationHistory = $this->_withoutRefusals($conversationHistory);
+
         if (!$this->isInScope($userMessage, $conversationHistory)) {
             return [
                 'text' => $settings->fallbackMessage,
@@ -131,6 +133,8 @@ class AiService extends Component
         $settings = Plugin::getInstance()->getSettings();
         $provider = Plugin::getInstance()->provider;
         $toolRegistry = Plugin::getInstance()->tools;
+
+        $conversationHistory = $this->_withoutRefusals($conversationHistory);
 
         if (!$this->isInScope($userMessage, $conversationHistory)) {
             yield ['type' => 'text_delta', 'data' => $settings->fallbackMessage];
@@ -339,6 +343,25 @@ class AiService extends Component
         return false;
     }
 
+    private function _withoutRefusals(array $history): array
+    {
+        $fallback = trim(Plugin::getInstance()->getSettings()->fallbackMessage);
+        $clean = [];
+
+        foreach ($history as $msg) {
+            if (($msg['role'] ?? '') === 'assistant' && trim((string)($msg['content'] ?? '')) === $fallback) {
+                $prev = end($clean);
+                if ($prev !== false && $prev['role'] === 'user') {
+                    array_pop($clean);
+                }
+                continue;
+            }
+            $clean[] = $msg;
+        }
+
+        return $clean;
+    }
+
     private function _buildStep1Messages(string $userMessage, array $history, string $pageUrl): array
     {
         $settings = Plugin::getInstance()->getSettings();
@@ -379,7 +402,8 @@ class AiService extends Component
         $systemPrompt .= "GROUNDING RULES:\n";
         $systemPrompt .= "1. Answer using ONLY {$sources} — these are your only sources of facts.\n";
         $systemPrompt .= "2. The CONTEXT was retrieved specifically for this question. If the answer is in there, give it. ";
-        $systemPrompt .= "Whether the question is on-topic has already been decided before this step — do not re-judge it.\n";
+        $systemPrompt .= "Whether the question is on-topic has already been decided before this step — do not re-judge it. ";
+        $systemPrompt .= "A request to look at, describe or summarize the current page is a valid question: answer it by describing what the CONTEXT contains.\n";
         $systemPrompt .= "3. Only when your sources genuinely do not contain the needed facts, reply with exactly:\n";
         $systemPrompt .= "\"{$settings->fallbackMessage}\"\n";
         $systemPrompt .= "4. Never fill the gap from your own general knowledge, even when you are certain of the fact. ";

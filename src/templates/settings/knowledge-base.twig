@@ -56,16 +56,12 @@
         </thead>
         <tbody>
             {% for file in files %}
-<tr data-kb-file="{{ file.id }}"></tr>
-
-
+            <tr data-kb-file="{{ file.id }}">
                 <td><strong>{{ file.originalName }}</strong></td>
                 <td>{{ file.mimeType }}</td>
                 <td>{{ (file.fileSize / 1024) | round(1) }} KB</td>
-<td data-kb-chunks>{{ file.chunkCount }}</td>
-<td data-kb-status data-status="{{ file.isStuck ? 'stuck' : file.status }}"></td>
-
-
+                <td data-kb-chunks>{{ file.chunkCount }}</td>
+                <td data-kb-status data-status="{{ file.isStuck ? 'stuck' : file.status }}">
                     {% if file.isStuck %}
                         <span class="status expired"></span> Stuck
                         <span class="info">Still “processing” since {{ file.dateUpdated }} — the worker likely died before finishing. Its chunks are invisible to search. Use Reprocess.</span>
@@ -136,8 +132,7 @@ var statusUrl =
             var statusCell = row.querySelector('[data-kb-status]');
             if (statusCell.getAttribute('data-status') === display) return;
             statusCell.setAttribute('data-status', display);
-            statusCell.innerHTML = '<span class="status ' + (statusClasses[display] || 'pending') + '"></span>
-' + (statusLabels[display] || display);
+            statusCell.innerHTML = '<span class="status ' + (statusClasses[display] || 'pending') + '"></span> ' + (statusLabels[display] || display);
             row.querySelector('[data-kb-chunks]').textContent = f.chunks;
         });
     }
