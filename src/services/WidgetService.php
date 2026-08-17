@@ -45,6 +45,7 @@ class WidgetService extends Component
                 'searching' => Craft::t('ai-agent', 'Searching: {tool}…'),
                 'errorGeneric' => Craft::t('ai-agent', 'An error occurred.'),
                 'connectionLost' => Craft::t('ai-agent', 'Connection lost. Please try again.'),
+                'unavailable' => Craft::t('ai-agent', 'The assistant is temporarily unavailable. Please try again later.'),
                 'contactInformation' => Craft::t('ai-agent', 'Contact Information'),
                 'submit' => Craft::t('ai-agent', 'Submit'),
                 'submitting' => Craft::t('ai-agent', 'Submitting…'),

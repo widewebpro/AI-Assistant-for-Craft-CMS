@@ -10,6 +10,7 @@ return [
     'Searching: {tool}…' => 'Searching: {tool}…',
     'An error occurred.' => 'An error occurred.',
     'Connection lost. Please try again.' => 'Connection lost. Please try again.',
+    'The assistant is temporarily unavailable. Please try again later.' => 'The assistant is temporarily unavailable. Please try again later.',
     'Contact Information' => 'Contact Information',
     'Submit' => 'Submit',
     'Submitting…' => 'Submitting…',

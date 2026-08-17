@@ -79,18 +79,6 @@
         }) }}
 
         {{ forms.textField({
-            label: "Max Messages Per Conversation",
-            instructions: "After this many messages, the conversation will be closed.",
-            id: "maxMessagesPerConversation",
-            name: "maxMessagesPerConversation",
-            value: settings.maxMessagesPerConversation,
-            type: "number",
-            min: 1,
-            max: 200,
-            size: 10,
-        }) }}
-
-        {{ forms.textField({
             label: "Rate Limit (messages per minute)",
             instructions: "Maximum messages a single session can send per minute.",
             id: "rateLimitPerMinute",

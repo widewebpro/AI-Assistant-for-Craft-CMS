@@ -70,13 +70,6 @@ class ChatService extends Component
         return $history;
     }
 
-    public function getMessageCount(int $conversationId): int
-    {
-        return (int)MessageRecord::find()
-            ->where(['conversationId' => $conversationId, 'role' => 'user'])
-            ->count();
-    }
-
     public function getRecentMessageCount(string $sessionId, int $seconds = 60): int
     {
         $since = DateTimeHelper::currentUTCDateTime()->modify("-{$seconds} seconds")->format('Y-m-d H:i:s');

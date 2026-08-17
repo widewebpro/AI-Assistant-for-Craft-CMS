@@ -13,6 +13,7 @@
   var sessionId = getSessionId();
   var isOpen = false;
   var isStreaming = false;
+  var sendLockedUntil = 0;
   var messages = loadMessages();
 
   // Create host element
@@ -154,13 +155,23 @@
 
   function sendMessage() {
     var text = input.value.trim();
-    if (!text || isStreaming) return;
+    if (!text || isStreaming || Date.now() < sendLockedUntil) return;
 
     addUserMessage(text);
     input.value = '';
     input.style.height = 'auto';
 
     streamResponse(text);
+  }
+
+  // Rate limit hit: block sending until the window resets, then quietly re-enable.
+  function lockSend(seconds) {
+    sendLockedUntil = Date.now() + seconds * 1000;
+    sendBtn.disabled = true;
+    setTimeout(function () {
+      sendLockedUntil = 0;
+      sendBtn.disabled = false;
+    }, seconds * 1000);
   }
 
   function addUserMessage(text) {
@@ -277,11 +288,22 @@
         if (!bubbleEl && typingEl.parentNode) {
           messagesEl.removeChild(typingEl);
         }
-        addBotMessage(
-          data.message ||
-            config.errorMessage ||
-            t('errorGeneric', 'An error occurred.'),
-        );
+        if (data.code === 'rate_limited' || data.code === 'daily_limit') {
+          // Transient limit: localized notice, not saved to history.
+          addBotMessage(
+            t('unavailable', 'The assistant is temporarily unavailable. Please try again later.'),
+            false,
+          );
+          if (data.code === 'rate_limited') {
+            lockSend(data.retryAfter || 60);
+          }
+        } else {
+          addBotMessage(
+            data.message ||
+              config.errorMessage ||
+              t('errorGeneric', 'An error occurred.'),
+          );
+        }
         finished = true;
         isStreaming = false;
         eventSource.close();
@@ -663,6 +685,7 @@
       primaryText +
       '; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }' +
       '.ai-send:hover { opacity: 0.9; }' +
+      '.ai-send:disabled { opacity: 0.5; cursor: not-allowed; }' +
       '.ai-escalation-form { width: 100%; max-width: 100%; }' +
       '.ai-esc-field { margin-bottom: 8px; }' +
       '.ai-esc-field label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 2px; color: ' +

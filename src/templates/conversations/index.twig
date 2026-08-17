@@ -10,7 +10,6 @@
             <select name="status" class="text">
                 <option value="">All Statuses</option>
                 <option value="active" {{ status == 'active' ? 'selected' : '' }}>Active</option>
-                <option value="closed" {{ status == 'closed' ? 'selected' : '' }}>Closed</option>
                 <option value="escalated" {{ status == 'escalated' ? 'selected' : '' }}>Escalated</option>
             </select>
             <button type="submit" class="btn">Filter</button>

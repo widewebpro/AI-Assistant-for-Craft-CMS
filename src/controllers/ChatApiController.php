@@ -7,7 +7,6 @@ use craft\web\Controller;
 use widewebpro\aiagent\Plugin;
 use yii\web\BadRequestHttpException;
 use yii\web\Response;
-use yii\web\TooManyRequestsHttpException;
 
 class ChatApiController extends Controller
 {
@@ -50,14 +49,12 @@ class ChatApiController extends Controller
 
         // Before the conversation/provider, so a blocked request is free.
         if ($limit = $this->_limitError($sessionId, $ip)) {
-            if ($limit['status'] === 'closed') {
-                return $this->asJson([
-                    'text' => $limit['message'],
-                    'sessionId' => $sessionId,
-                    'status' => 'closed',
-                ]);
-            }
-            throw new TooManyRequestsHttpException($limit['message']);
+            $this->response->setStatusCode(429);
+            return $this->asJson([
+                'error' => $limit['message'],
+                'code' => $limit['code'],
+                'retryAfter' => $limit['retryAfter'],
+            ]);
         }
 
         $conversation = $plugin->chat->getOrCreateConversation($sessionId, $pageUrl, $ip);
@@ -153,7 +150,11 @@ class ChatApiController extends Controller
 
         // Before the conversation/provider, so a blocked request is free.
         if ($limit = $this->_limitError($sessionId, $ip)) {
-            $this->_sendSSE('error', ['message' => $limit['message'], 'status' => $limit['status']]);
+            $this->_sendSSE('error', [
+                'message' => $limit['message'],
+                'code' => $limit['code'],
+                'retryAfter' => $limit['retryAfter'],
+            ]);
             $this->_sendSSE('done', []);
             exit;
         }
@@ -336,33 +337,28 @@ class ChatApiController extends Controller
     }
 
     /**
-     * First tripped limit as ['message' => ..., 'status' => 'error'|'closed'], else null.
-     * Shared by send and stream. Per-IP and daily limits are off at 0.
+     * First tripped limit as ['message' => ..., 'code' => 'rate_limited'|'daily_limit', 'retryAfter' => seconds|null],
+     * else null.
      */
     private function _limitError(string $sessionId, string $ip): ?array
     {
         $chat = Plugin::getInstance()->chat;
         $settings = Plugin::getInstance()->getSettings();
 
+        $message = 'The assistant is temporarily unavailable. Please try again later.';
+
         if ($chat->getRecentMessageCount($sessionId) >= $settings->rateLimitPerMinute) {
-            return ['message' => 'Rate limit exceeded. Please wait a moment.', 'status' => 'error'];
+            return ['message' => $message, 'code' => 'rate_limited', 'retryAfter' => 60];
         }
 
         $ipLimit = (int)$settings->rateLimitPerMinutePerIp;
         if ($ipLimit > 0 && $chat->getRecentMessageCountByIp($ip) >= $ipLimit) {
-            return ['message' => 'Rate limit exceeded. Please wait a moment.', 'status' => 'error'];
+            return ['message' => $message, 'code' => 'rate_limited', 'retryAfter' => 60];
         }
 
         $dailyLimit = (int)$settings->dailyMessageLimit;
         if ($dailyLimit > 0 && $chat->getDailyMessageCount() >= $dailyLimit) {
-            return ['message' => 'The assistant is temporarily unavailable due to high demand. Please try again later.', 'status' => 'error'];
-        }
-
-        $conversation = \widewebpro\aiagent\records\ConversationRecord::find()
-            ->where(['sessionId' => $sessionId])
-            ->one();
-        if ($conversation && $chat->getMessageCount($conversation->id) >= $settings->maxMessagesPerConversation) {
-            return ['message' => 'This conversation has reached its message limit. Please start a new conversation.', 'status' => 'closed'];
+            return ['message' => $message, 'code' => 'daily_limit', 'retryAfter' => null];
         }
 
         return null;

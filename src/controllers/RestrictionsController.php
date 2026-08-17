@@ -40,7 +40,6 @@ class RestrictionsController extends Controller
         $settings->fallbackMessage = $request->getBodyParam('fallbackMessage', '');
         $settings->errorMessage = $request->getBodyParam('errorMessage', '');
         $settings->maxMessageLength = (int)$request->getBodyParam('maxMessageLength', 1000);
-        $settings->maxMessagesPerConversation = (int)$request->getBodyParam('maxMessagesPerConversation', 50);
         $settings->rateLimitPerMinute = (int)$request->getBodyParam('rateLimitPerMinute', 10);
         $settings->rateLimitPerMinutePerIp = (int)$request->getBodyParam('rateLimitPerMinutePerIp', 30);
         $settings->dailyMessageLimit = (int)$request->getBodyParam('dailyMessageLimit', 0);
