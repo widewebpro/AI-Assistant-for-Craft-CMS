@@ -39,6 +39,7 @@ class Settings extends Model
     public string $disallowedTopics = '';
     public string $fallbackMessage = "I'm sorry, I can only help with topics related to this website. Is there anything else I can assist you with?";
     public string $errorMessage = "I'm sorry, something went wrong. Please try again later.";
+    public int $maxMessageLength = 1000;
     public int $maxMessagesPerConversation = 50;
     public int $rateLimitPerMinute = 10;
     public int $rateLimitPerMinutePerIp = 30;
@@ -116,6 +117,7 @@ class Settings extends Model
             [['widgetPosition'], 'in', 'range' => ['bottom-right', 'bottom-left']],
             [['maxTokens'], 'integer', 'min' => 100, 'max' => 8192],
             [['temperature'], 'number', 'min' => 0, 'max' => 2],
+            [['maxMessageLength'], 'integer', 'min' => 100, 'max' => 8000],
             [['maxMessagesPerConversation'], 'integer', 'min' => 1, 'max' => 200],
             [['rateLimitPerMinute'], 'integer', 'min' => 1, 'max' => 60],
             [['rateLimitPerMinutePerIp'], 'integer', 'min' => 0, 'max' => 600],

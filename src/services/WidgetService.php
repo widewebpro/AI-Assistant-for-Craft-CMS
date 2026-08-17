@@ -19,6 +19,7 @@ class WidgetService extends Component
             'avatarUrl' => $settings->avatarUrl,
             'welcomeMessage' => $settings->welcomeMessage,
             'placeholderText' => $settings->placeholderText,
+            'maxMessageLength' => $settings->maxMessageLength,
             'position' => $settings->widgetPosition,
             'theme' => [
                 'primaryColor' => $settings->primaryColor,

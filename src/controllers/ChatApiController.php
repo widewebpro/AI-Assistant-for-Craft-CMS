@@ -36,6 +36,10 @@ class ChatApiController extends Controller
             throw new BadRequestHttpException('Message is required.');
         }
 
+        if (mb_strlen($message) > $settings->maxMessageLength) {
+            throw new BadRequestHttpException("Message is too long. Maximum {$settings->maxMessageLength} characters.");
+        }
+
         if (empty($sessionId)) {
             $sessionId = \craft\helpers\StringHelper::UUID();
         } elseif (!$plugin->chat->isValidSessionId($sessionId)) {
@@ -129,6 +133,12 @@ class ChatApiController extends Controller
 
         if (empty($message) || empty($sessionId)) {
             $this->_sendSSE('error', ['message' => 'Message and sessionId are required.']);
+            $this->_sendSSE('done', []);
+            exit;
+        }
+
+        if (mb_strlen($message) > $settings->maxMessageLength) {
+            $this->_sendSSE('error', ['message' => "Message is too long. Maximum {$settings->maxMessageLength} characters."]);
             $this->_sendSSE('done', []);
             exit;
         }

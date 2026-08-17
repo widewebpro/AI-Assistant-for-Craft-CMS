@@ -67,6 +67,18 @@
         <h2>Rate Limiting</h2>
 
         {{ forms.textField({
+            label: "Max Message Length (characters)",
+            instructions: "Longest message a user can send. Keeps token cost per message predictable and stays well under the URL-length limits reverse proxies impose on the streaming endpoint.",
+            id: "maxMessageLength",
+            name: "maxMessageLength",
+            value: settings.maxMessageLength,
+            type: "number",
+            min: 100,
+            max: 8000,
+            size: 10,
+        }) }}
+
+        {{ forms.textField({
             label: "Max Messages Per Conversation",
             instructions: "After this many messages, the conversation will be closed.",
             id: "maxMessagesPerConversation",

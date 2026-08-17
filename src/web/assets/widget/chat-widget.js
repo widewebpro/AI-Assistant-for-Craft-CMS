@@ -87,7 +87,9 @@
   inputArea.innerHTML =
     '<textarea class="ai-input" placeholder="' +
     escapeHtml(config.placeholderText) +
-    '" rows="1" aria-label="' +
+    '" rows="1" maxlength="' +
+    (parseInt(config.maxMessageLength, 10) || 1000) +
+    '" aria-label="' +
     escapeHtml(t('messageAria', 'Message')) +
     '"></textarea>' +
     '<button class="ai-send" aria-label="' +
