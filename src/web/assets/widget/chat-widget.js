@@ -4,6 +4,10 @@
   var config = window.__aiAgentConfig;
   if (!config || !config.enabled) return;
 
+  function t(key, fallback) {
+    return (config.strings && config.strings[key]) || fallback;
+  }
+
   var sessionId = getSessionId();
   var isOpen = false;
   var isStreaming = false;
@@ -31,13 +35,16 @@
   var container = document.createElement('div');
   container.className = 'ai-widget';
   container.setAttribute('role', 'complementary');
-  container.setAttribute('aria-label', config.agentName + ' Chat');
+  container.setAttribute(
+    'aria-label',
+    t('widgetAria', config.agentName + ' Chat'),
+  );
   shadow.appendChild(container);
 
   // Toggle button
   var toggleBtn = document.createElement('button');
   toggleBtn.className = 'ai-toggle';
-  toggleBtn.setAttribute('aria-label', 'Open chat');
+  toggleBtn.setAttribute('aria-label', t('openChat', 'Open chat'));
   toggleBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
   container.appendChild(toggleBtn);
 
@@ -54,11 +61,17 @@
 
   var header = document.createElement('div');
   header.className = 'ai-header';
-  header.innerHTML = '<div class="ai-header-info"><div class="ai-avatar">' +
+  header.innerHTML =
+    '<div class="ai-header-info"><div class="ai-avatar">' +
     avatarContent +
-    '</div><div><div class="ai-name">' + escapeHtml(config.agentName) +
-    '</div><div class="ai-status">Online</div></div></div>' +
-    '<button class="ai-close" aria-label="Close chat">&times;</button>';
+    '</div><div><div class="ai-name">' +
+    escapeHtml(config.agentName) +
+    '</div><div class="ai-status">' +
+    escapeHtml(t('online', 'Online')) +
+    '</div></div></div>' +
+    '<button class="ai-close" aria-label="' +
+    escapeHtml(t('closeChat', 'Close chat')) +
+    '">&times;</button>';
   panel.appendChild(header);
 
   // Messages area
@@ -71,10 +84,15 @@
   // Input area
   var inputArea = document.createElement('div');
   inputArea.className = 'ai-input-area';
-  inputArea.innerHTML = '<textarea class="ai-input" placeholder="' +
+  inputArea.innerHTML =
+    '<textarea class="ai-input" placeholder="' +
     escapeHtml(config.placeholderText) +
-    '" rows="1" aria-label="Message"></textarea>' +
-    '<button class="ai-send" aria-label="Send message">' +
+    '" rows="1" aria-label="' +
+    escapeHtml(t('messageAria', 'Message')) +
+    '"></textarea>' +
+    '<button class="ai-send" aria-label="' +
+    escapeHtml(t('sendMessage', 'Send message')) +
+    '">' +
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>';
   panel.appendChild(inputArea);
 
@@ -228,7 +246,10 @@
       var data = JSON.parse(e.data);
       var indicator = document.createElement('div');
       indicator.className = 'ai-tool-indicator';
-      indicator.textContent = 'Searching: ' + data.tool + '...';
+      indicator.textContent = t('searching', 'Searching: {tool}...').replace(
+        '{tool}',
+        data.tool,
+      );
       if (typingEl.parentNode) {
         messagesEl.insertBefore(indicator, typingEl);
       } else {
@@ -249,7 +270,9 @@
           messagesEl.removeChild(typingEl);
         }
         addBotMessage(
-          data.message || config.errorMessage || 'An error occurred.',
+          data.message ||
+            config.errorMessage ||
+            t('errorGeneric', 'An error occurred.'),
         );
         finished = true;
         isStreaming = false;
@@ -266,7 +289,8 @@
       }
       if (!fullText) {
         addBotMessage(
-          config.errorMessage || 'Connection lost. Please try again.',
+          config.errorMessage ||
+            t('connectionLost', 'Connection lost. Please try again.'),
         );
       } else {
         messages.push({ role: 'assistant', content: fullText });
@@ -309,7 +333,10 @@
     var formBubble = document.createElement('div');
     formBubble.className = 'ai-bubble ai-escalation-form';
 
-    var html = '<div style="font-weight:600;margin-bottom:8px;">Contact Information</div>';
+    var html =
+      '<div style="font-weight:600;margin-bottom:8px;">' +
+      escapeHtml(t('contactInformation', 'Contact Information')) +
+      '</div>';
 
     for (var i = 0; i < fields.length; i++) {
       var f = fields[i];
@@ -342,7 +369,10 @@
       html += '</div>';
     }
 
-    html += '<button type="button" class="ai-esc-submit">Submit</button>';
+    html +=
+      '<button type="button" class="ai-esc-submit">' +
+      escapeHtml(t('submit', 'Submit')) +
+      '</button>';
     formBubble.innerHTML = html;
     formWrapper.appendChild(formBubble);
     messagesEl.appendChild(formWrapper);
@@ -388,7 +418,7 @@
       if (!hasRequired) return;
 
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting...';
+      submitBtn.textContent = t('submitting', 'Submitting...');
 
       var siteUrl = config.endpoints.stream.replace('/ai-agent/chat/stream', '');
       fetch(siteUrl + '/ai-agent/escalate', {
@@ -404,8 +434,13 @@
         })
         .catch(function () {
           submitBtn.disabled = false;
-          submitBtn.textContent = 'Submit';
-          addBotMessage('Sorry, there was an error submitting the form. Please try again.');
+          submitBtn.textContent = t('submit', 'Submit');
+          addBotMessage(
+            t(
+              'formError',
+              'Sorry, there was an error submitting the form. Please try again.',
+            ),
+          );
         });
     });
   }
