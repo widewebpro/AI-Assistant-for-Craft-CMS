@@ -28,44 +28,47 @@ class AiService extends Component
         }
 
         // Step 1: Validation & Tool Selection
+
         $step1Messages = $this->_buildStep1Messages($userMessage, $conversationHistory, $pageUrl);
-        $toolSchemas = $toolRegistry->getSchemas();
+        $toolSchemas = array_merge($toolRegistry->getSchemas(), [$this->_classifierSchema()]);
 
         $step1Response = $provider->chat($step1Messages, $toolSchemas, [
             'temperature' => 0.3,
+            'tool_choice' => 'required',
         ]);
 
-        // Handle classification responses
-        if (empty($step1Response['tool_calls']) && $step1Response['text']) {
-            $text = strtolower(trim($step1Response['text']));
+        $toolCalls = $step1Response['tool_calls'] ?? [];
+        $classification = $this->_extractClassification($toolCalls);
+        $step1Response['tool_calls'] = $toolCalls;
 
-            if (str_contains($text, '[off_topic]')) {
-                return [
-                    'text' => $settings->fallbackMessage,
-                    'tool_calls' => [],
-                    'tool_results' => [],
-                    'usage' => $step1Response['usage'] ?? [],
-                ];
-            }
+        if ($classification === 'off_topic') {
+            return [
+                'text' => $settings->fallbackMessage,
+                'tool_calls' => [],
+                'tool_results' => [],
+                'usage' => ['step1' => $step1Response['usage'] ?? []],
+            ];
+        }
 
-            if (str_contains($text, '[greeting]')) {
-                // Skip tools, go straight to step 2 for a friendly response
-                $step2Messages = $this->_buildGreetingMessages($userMessage, $conversationHistory, $settings);
-                $step2Response = $provider->chat($step2Messages, [], [
-                    'temperature' => $settings->temperature,
-                ]);
-                return [
-                    'text' => $step2Response['text'] ?? 'Hello! How can I help you?',
-                    'tool_calls' => [],
-                    'tool_results' => [],
-                    'usage' => [
-                        'step1' => $step1Response['usage'] ?? [],
-                        'step2' => $step2Response['usage'] ?? [],
-                    ],
-                ];
-            }
+        if ($classification === 'greeting') {
+            // Skip tools, go straight to step 2 for a friendly response
+            $step2Messages = $this->_buildGreetingMessages($userMessage, $conversationHistory, $settings);
+            $step2Response = $provider->chat($step2Messages, [], [
+                'temperature' => $settings->temperature,
+            ]);
+            return [
+                'text' => $step2Response['text'] ?? 'Hello! How can I help you?',
+                'tool_calls' => [],
+                'tool_results' => [],
+                'usage' => [
+                    'step1' => $step1Response['usage'] ?? [],
+                    'step2' => $step2Response['usage'] ?? [],
+                ],
+            ];
+        }
 
-            // LLM didn't call tools but should have — force a KB search as fallback
+        // Forced tool choice makes this a provider quirk — degrade to a KB search.
+        if (empty($step1Response['tool_calls'])) {
             $step1Response['tool_calls'] = [[
                 'id' => 'fallback_kb_search',
                 'name' => 'search_knowledge_base',
@@ -135,30 +138,34 @@ class AiService extends Component
             return;
         }
 
-        // Step 1: Validation & Tool Selection (non-streaming)
+        // Step 1: Validation & Tool Selection (non-streaming). Tool choice is
+        // forced — same routing contract as processMessage, no text parsing.
         $step1Messages = $this->_buildStep1Messages($userMessage, $conversationHistory, $pageUrl);
-        $toolSchemas = $toolRegistry->getSchemas();
+        $toolSchemas = array_merge($toolRegistry->getSchemas(), [$this->_classifierSchema()]);
 
         $step1Response = $provider->chat($step1Messages, $toolSchemas, [
             'temperature' => 0.3,
+            'tool_choice' => 'required',
         ]);
 
-        if (empty($step1Response['tool_calls']) && $step1Response['text']) {
-            $text = strtolower(trim($step1Response['text']));
+        $toolCalls = $step1Response['tool_calls'] ?? [];
+        $classification = $this->_extractClassification($toolCalls);
+        $step1Response['tool_calls'] = $toolCalls;
 
-            if (str_contains($text, '[off_topic]')) {
-                yield ['type' => 'text_delta', 'data' => $settings->fallbackMessage];
-                yield ['type' => 'done', 'data' => ['tool_calls' => [], 'tool_results' => []]];
-                return;
-            }
+        if ($classification === 'off_topic') {
+            yield ['type' => 'text_delta', 'data' => $settings->fallbackMessage];
+            yield ['type' => 'done', 'data' => ['tool_calls' => [], 'tool_results' => []]];
+            return;
+        }
 
-            if (str_contains($text, '[greeting]')) {
-                $greetingMessages = $this->_buildGreetingMessages($userMessage, $conversationHistory, $settings);
-                yield from $this->_relayProviderStream($provider->stream($greetingMessages));
-                return;
-            }
+        if ($classification === 'greeting') {
+            $greetingMessages = $this->_buildGreetingMessages($userMessage, $conversationHistory, $settings);
+            yield from $this->_relayProviderStream($provider->stream($greetingMessages));
+            return;
+        }
 
-            // LLM didn't call tools but should have — force a KB search as fallback
+        // Forced tool choice makes this a provider quirk — degrade to a KB search.
+        if (empty($step1Response['tool_calls'])) {
             $step1Response['tool_calls'] = [[
                 'id' => 'fallback_kb_search',
                 'name' => 'search_knowledge_base',
@@ -221,6 +228,58 @@ class AiService extends Component
                 yield ['type' => 'tool_call', 'data' => ['tool' => $call['name'] ?? '', 'args' => $args]];
             }
         }
+    }
+
+    private function _classifierSchema(): array
+    {
+        return [
+            'name' => 'classify_message',
+            'description' => "Classify the user's message when it needs NO information tools: a greeting or pleasantry, or an off-topic/banned request.",
+            'parameters' => [
+                'type' => 'object',
+                'properties' => [
+                    'category' => [
+                        'type' => 'string',
+                        'enum' => ['greeting', 'off_topic'],
+                        'description' => 'greeting: casual pleasantry deserving a friendly reply. off_topic: outside the permitted topics or about a banned topic.',
+                    ],
+                ],
+                'required' => ['category'],
+            ],
+        ];
+    }
+
+    private function _extractClassification(array &$toolCalls): ?string
+    {
+        $category = null;
+        $remaining = [];
+
+        foreach ($toolCalls as $call) {
+            if (($call['name'] ?? '') !== 'classify_message') {
+                $remaining[] = $call;
+                continue;
+            }
+
+            $args = $call['arguments'] ?? [];
+            if (is_string($args)) {
+                $args = json_decode($args, true) ?? [];
+            }
+
+            $verdict = $args['category'] ?? '';
+            if ($verdict === 'off_topic') {
+                $category = 'off_topic';
+            } elseif ($verdict === 'greeting' && $category === null) {
+                $category = 'greeting';
+            }
+        }
+
+        $toolCalls = $remaining;
+
+        if ($category === 'greeting' && $remaining !== []) {
+            return null;
+        }
+
+        return $category;
     }
 
     private function _pageContextFallback(array $toolCalls, array $toolResults, string $pageUrl): ?array
@@ -443,7 +502,7 @@ class AiService extends Component
         if ($settings->allowedTopics) {
             $prompt .= "SCOPE GATE — APPLY THIS FIRST, BEFORE ANYTHING ELSE:\n";
             $prompt .= "This assistant is restricted to the following topics ONLY:\n{$settings->allowedTopics}\n\n";
-            $prompt .= "If the user's message is not about one of those topics, respond with exactly [OFF_TOPIC] and stop.\n";
+            $prompt .= "If the user's message is not about one of those topics, call classify_message with category \"off_topic\" and no other tools.\n";
             $prompt .= "This applies even when you could answer, even when the answer is in the knowledge base,\n";
             $prompt .= "and even for ordinary questions about this business — opening hours, contact details,\n";
             $prompt .= "pricing, delivery, the company itself — unless that subject is named in the list above.\n";
@@ -452,20 +511,21 @@ class AiService extends Component
         }
 
         if ($settings->disallowedTopics) {
-            $prompt .= "BANNED TOPICS — respond with exactly [OFF_TOPIC] for any message about:\n{$settings->disallowedTopics}\n\n";
+            $prompt .= "BANNED TOPICS — call classify_message with category \"off_topic\" for any message about:\n{$settings->disallowedTopics}\n\n";
         }
 
+        $prompt .= "You MUST respond by calling tools — never with plain text.\n\n";
         $prompt .= "MESSAGE CLASSIFICATION — pick ONE:\n\n";
 
         $prompt .= "A) GREETING or casual message (\"hello\", \"hi\", \"thanks\", \"how are you\", etc.)\n";
-        $prompt .= "   → Respond with exactly: [GREETING]\n";
-        $prompt .= "   Do NOT call any tools for greetings or pleasantries.\n\n";
+        $prompt .= "   → Call classify_message with category \"greeting\".\n";
+        $prompt .= "   Do NOT call information tools for greetings or pleasantries.\n\n";
 
         $prompt .= "B) QUESTION or request that needs information\n";
         $prompt .= "   → Call one or more tools to gather the information. Do NOT answer directly.\n\n";
 
         $prompt .= "C) OFF-TOPIC or DISALLOWED topic\n";
-        $prompt .= "   → Respond with exactly: [OFF_TOPIC]\n\n";
+        $prompt .= "   → Call classify_message with category \"off_topic\".\n\n";
 
         if ($settings->escalationEnabled) {
             $prompt .= "D) User wants to be connected to a human\n";
@@ -514,7 +574,7 @@ class AiService extends Component
         $prompt .= "6. You CAN call multiple tools in a single response.\n";
         $prompt .= "7. When in doubt about WHICH tool to use, call search_knowledge_base — better to search and find\n";
         $prompt .= "   nothing than to skip it. This never overrides the scope gate: an out-of-scope message is\n";
-        $prompt .= "   [OFF_TOPIC], not a search.\n";
+        $prompt .= "   classify_message(\"off_topic\"), not a search.\n";
 
         if ($pageUrl) {
             $prompt .= "\nThe user is currently on page: {$pageUrl}";

@@ -160,7 +160,7 @@ class ProviderService extends Component
 
         if (!empty($tools)) {
             $payload['tools'] = $this->_formatOpenAITools($tools);
-            $payload['tool_choice'] = 'auto';
+            $payload['tool_choice'] = ($options['tool_choice'] ?? null) === 'required' ? 'required' : 'auto';
         }
 
         return $payload;
@@ -318,6 +318,10 @@ class ProviderService extends Component
 
         if (!empty($tools)) {
             $payload['tools'] = $this->_formatAnthropicTools($tools);
+            // Anthropic's equivalent of OpenAI's 'required': force some tool.
+            if (($options['tool_choice'] ?? null) === 'required') {
+                $payload['tool_choice'] = ['type' => 'any'];
+            }
         }
 
         $response = $this->_getClient()->post('https://api.anthropic.com/v1/messages', [
@@ -360,6 +364,10 @@ class ProviderService extends Component
 
         if (!empty($tools)) {
             $payload['tools'] = $this->_formatAnthropicTools($tools);
+            // Anthropic's equivalent of OpenAI's 'required': force some tool.
+            if (($options['tool_choice'] ?? null) === 'required') {
+                $payload['tool_choice'] = ['type' => 'any'];
+            }
         }
 
         $response = $this->_getClient()->post('https://api.anthropic.com/v1/messages', [
