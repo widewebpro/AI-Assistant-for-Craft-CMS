@@ -80,10 +80,12 @@ class ChatApiController extends Controller
                 $tokensUsed += ($step['total_tokens'] ?? 0);
             }
 
-            // Save assistant message
+            // Save assistant message. Arrays, not json_encode: the columns are
+            // json-typed, so the record layer encodes — a pre-encoded string
+            // gets encoded twice and stores a JSON string scalar.
             $assistantMsg = $plugin->chat->addMessage($conversation->id, 'assistant', $result['text'], [
-                'toolCalls' => !empty($result['tool_calls']) ? json_encode($result['tool_calls']) : null,
-                'toolResults' => !empty($result['tool_results']) ? json_encode($result['tool_results']) : null,
+                'toolCalls' => $result['tool_calls'] ?: null,
+                'toolResults' => $result['tool_results'] ?: null,
                 'tokensUsed' => $tokensUsed ?: null,
             ]);
 
@@ -205,10 +207,10 @@ class ChatApiController extends Controller
                 }
             }
 
-            // Save assistant response
+            // Save assistant response (arrays — the json columns encode themselves)
             $assistantMsg = $plugin->chat->addMessage($conversation->id, 'assistant', $fullText, [
-                'toolCalls' => !empty($allToolCalls) ? json_encode($allToolCalls) : null,
-                'toolResults' => !empty($allToolResults) ? json_encode($allToolResults) : null,
+                'toolCalls' => $allToolCalls ?: null,
+                'toolResults' => $allToolResults ?: null,
             ]);
 
             $this->_sendSSE('done', ['messageId' => $assistantMsg->id]);
@@ -293,9 +295,13 @@ class ChatApiController extends Controller
             return $this->asJson(['error' => 'Conversation not found.', 'status' => 'error']);
         }
 
-        $metadata = $conversation->metadata ? json_decode($conversation->metadata, true) : [];
+        $metadata = $conversation->metadata;
+        if (is_string($metadata)) {
+            $metadata = json_decode($metadata, true);
+        }
+        $metadata = is_array($metadata) ? $metadata : [];
         $metadata['contact'] = $contactData;
-        $conversation->metadata = json_encode($metadata);
+        $conversation->metadata = $metadata;
         $conversation->status = 'escalated';
         $conversation->save(false);
 
@@ -313,7 +319,7 @@ class ChatApiController extends Controller
 
         if (!empty($webhookResults)) {
             $metadata['webhookResults'] = $webhookResults;
-            $conversation->metadata = json_encode($metadata);
+            $conversation->metadata = $metadata;
             $conversation->save(false);
         }
 

@@ -128,9 +128,20 @@ class ChatService extends Component
 
     public function markEscalated(int $conversationId, string $reason = ''): void
     {
-        ConversationRecord::updateAll(
-            ['status' => 'escalated', 'metadata' => json_encode(['escalation_reason' => $reason])],
-            ['id' => $conversationId]
-        );
+        $record = ConversationRecord::findOne($conversationId);
+        if (!$record) {
+            return;
+        }
+
+        $metadata = $record->metadata;
+        if (is_string($metadata)) {
+            $metadata = json_decode($metadata, true);
+        }
+        $metadata = is_array($metadata) ? $metadata : [];
+        $metadata['escalation_reason'] = $reason;
+
+        $record->status = 'escalated';
+        $record->metadata = $metadata;
+        $record->save(false);
     }
 }
