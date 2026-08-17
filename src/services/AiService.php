@@ -76,6 +76,25 @@ class AiService extends Component
         // Execute tool calls
         $toolResults = $toolRegistry->executeToolCalls($step1Response['tool_calls']);
 
+        // When every tool the router picked came back empty, consult the current
+        // page once — decided here in code, since the router's judgement already
+        // failed by this point.
+        if ($extra = $this->_pageContextFallback($step1Response['tool_calls'], $toolResults, $pageUrl)) {
+            $step1Response['tool_calls'][] = $extra['call'];
+            $toolResults[] = $extra['result'];
+        }
+
+        // Still nothing usable — a grounded answer can only be the fallback
+        // message, so skip the step-2 provider call entirely.
+        if (!$this->_hasUsableContext($toolResults)) {
+            return [
+                'text' => $settings->fallbackMessage,
+                'tool_calls' => $step1Response['tool_calls'],
+                'tool_results' => $toolResults,
+                'usage' => ['step1' => $step1Response['usage'] ?? []],
+            ];
+        }
+
         // Step 2: Generate answer with context from tool results
         $step2Messages = $this->_buildStep2Messages(
             $userMessage,
@@ -161,6 +180,19 @@ class AiService extends Component
             }
         }
 
+        if ($extra = $this->_pageContextFallback($step1Response['tool_calls'], $toolResults, $pageUrl)) {
+            yield ['type' => 'tool_call', 'data' => ['tool' => 'get_page_context', 'args' => ['url' => $pageUrl]]];
+            $step1Response['tool_calls'][] = $extra['call'];
+            $toolResults[] = $extra['result'];
+            yield ['type' => 'tool_result', 'data' => ['tool' => 'get_page_context', 'status' => 'ok']];
+        }
+
+        if (!$this->_hasUsableContext($toolResults)) {
+            yield ['type' => 'text_delta', 'data' => $settings->fallbackMessage];
+            yield ['type' => 'done', 'data' => ['tool_calls' => $step1Response['tool_calls'], 'tool_results' => $toolResults]];
+            return;
+        }
+
         // Step 2: Stream the answer
         $step2Messages = $this->_buildStep2Messages(
             $userMessage,
@@ -189,6 +221,63 @@ class AiService extends Component
                 yield ['type' => 'tool_call', 'data' => ['tool' => $call['name'] ?? '', 'args' => $args]];
             }
         }
+    }
+
+    private function _pageContextFallback(array $toolCalls, array $toolResults, string $pageUrl): ?array
+    {
+        if ($pageUrl === '' || $this->_hasUsableContext($toolResults)) {
+            return null;
+        }
+
+        foreach ($toolCalls as $call) {
+            if (($call['name'] ?? '') === 'get_page_context') {
+                return null;
+            }
+        }
+
+        $call = [
+            'id' => 'fallback_page_context',
+            'name' => 'get_page_context',
+            'arguments' => ['url' => $pageUrl],
+        ];
+
+        $result = Plugin::getInstance()->tools->executeToolCalls([$call]);
+
+        return ['call' => $call, 'result' => $result[0]];
+    }
+
+    private function _hasUsableContext(array $toolResults): bool
+    {
+        foreach ($toolResults as $result) {
+            if (!$this->_isEmptyToolResult($result['name'] ?? '', (string)($result['result'] ?? ''))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function _isEmptyToolResult(string $name, string $resultJson): bool
+    {
+        $data = json_decode($resultJson, true);
+
+        if (!is_array($data)) {
+            return trim($resultJson) === '';
+        }
+
+        if (isset($data['error']) || array_keys($data) === ['message']) {
+            return true;
+        }
+
+        if ($name === 'get_page_context') {
+            return trim((string)($data['text_content'] ?? '')) === ''
+                && empty($data['headings'])
+                && empty($data['fields'])
+                && trim((string)($data['title'] ?? '')) === ''
+                && trim((string)($data['page_title'] ?? '')) === '';
+        }
+
+        return false;
     }
 
     private function _buildStep1Messages(string $userMessage, array $history, string $pageUrl): array
@@ -224,8 +313,18 @@ class AiService extends Component
             $systemPrompt .= "BUSINESS INFORMATION (reliable facts about the business behind this website):\n{$businessInfo}\n\n";
         }
 
-        $systemPrompt .= "Use the following context to answer the user's question. ";
-        $systemPrompt .= "If the context doesn't contain relevant information, say so honestly.\n\n";
+        $sources = $businessInfo !== ''
+            ? 'the BUSINESS INFORMATION above and the CONTEXT below'
+            : 'the CONTEXT below';
+
+        $systemPrompt .= "GROUNDING RULES:\n";
+        $systemPrompt .= "1. Answer using ONLY {$sources} — these are your only sources of facts.\n";
+        $systemPrompt .= "2. The CONTEXT was retrieved specifically for this question. If the answer is in there, give it. ";
+        $systemPrompt .= "Whether the question is on-topic has already been decided before this step — do not re-judge it.\n";
+        $systemPrompt .= "3. Only when your sources genuinely do not contain the needed facts, reply with exactly:\n";
+        $systemPrompt .= "\"{$settings->fallbackMessage}\"\n";
+        $systemPrompt .= "4. Never fill the gap from your own general knowledge, even when you are certain of the fact. ";
+        $systemPrompt .= "If it is not in your sources, you do not know it.\n\n";
         $systemPrompt .= "CONTEXT:\n{$context}";
 
         if ($pageUrl) {
@@ -404,7 +503,8 @@ class AiService extends Component
         $prompt .= "TOOL SELECTION RULES (for category B messages):\n";
         $prompt .= "1. For questions that could be answered by documents, call search_knowledge_base. This is your PRIMARY source.\n";
         $prompt .= "2. Also call get_business_info if asking about the company, contact info, hours, etc.\n";
-        $prompt .= "3. Also call get_page_context if the question relates to the current page.\n";
+        $prompt .= "3. Call get_page_context when the user asks about the page they are on (\"this page\", \"here\",\n";
+        $prompt .= "   what it says or shows) or when the question clearly relates to it.\n";
         $prompt .= "4. Call list_knowledge_topics if unsure what information is available.\n";
         $prompt .= "5. You CAN call multiple tools in a single response.\n";
         $prompt .= "6. When in doubt about WHICH tool to use, call search_knowledge_base — better to search and find\n";
