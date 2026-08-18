@@ -3,8 +3,28 @@
     "description": "AI-powered chat agent plugin for Craft CMS with knowledge base, tool calling, and customizable widget",
     "type": "craft-plugin",
     "license": "MIT",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
+    "keywords": [
+        "craft",
+        "craftcms",
+        "craft-plugin",
+        "ai",
+        "chatbot",
+        "assistant",
+        "rag",
+        "openai",
+        "anthropic"
+    ],
+    "authors": [
+        {
+            "name": "Wideweb",
+            "homepage": "https://wideweb.pro"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/widewebpro/AI-Assistant-for-Craft-CMS/issues",
+        "source": "https://github.com/widewebpro/AI-Assistant-for-Craft-CMS",
+        "docs": "https://github.com/widewebpro/AI-Assistant-for-Craft-CMS/blob/main/README.md"
+    },
     "require": {
         "php": "^8.2",
         "craftcms/cms": "^5.0",
@@ -19,9 +39,10 @@
     },
     "extra": {
         "handle": "ai-agent",
-        "name": "AI Assistant for Craft CMS",
+        "name": "AI Assistant",
         "developer": "Wideweb",
         "developerUrl": "https://wideweb.pro",
+        "documentationUrl": "https://github.com/widewebpro/AI-Assistant-for-Craft-CMS/blob/main/README.md",
         "description": "AI-powered chat agent with knowledge base and customizable widget",
         "class": "widewebpro\\aiagent\\Plugin",
         "hasCpSettings": true,

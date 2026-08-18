@@ -2,6 +2,31 @@
 
 All notable changes to AI Assistant for Craft CMS will be documented in this file.
 
+## [0.3.0] - 2026-08-18
+
+### Added
+- **Site content search tool** (`search_site_content`) — the agent can search live entries by keyword (titles, URLs, snippets), with an on/off switch and optional section allow-list in Restrictions. Falls back to an OR query when a multi-word search finds nothing.
+- **Deterministic page-context routing** — when a question isn't about the current page and retrieval finds nothing, the plugin itself consults the page context once before giving up; grounding rules prevent the model from re-judging topicality.
+- **Robust step-1 classification via forced tool choice** — greetings/off-topic verdicts arrive as a `classify_message` tool call on both providers (works on every dropdown model), replacing fragile magic-string parsing.
+- **Widget interface localization** — all widget chrome strings are served translated via Craft's translation system; the plugin ships an English key reference (`src/translations/en/ai-agent.php`) to copy into your project's `translations/<lang>/ai-agent.php`.
+- **Escalation webhooks moved to the queue** — form submission responds instantly; webhook calls run in a non-retryable queue job and their results are merged into conversation metadata.
+- **Max message length setting** (100–8000 chars, default 1000) — enforced in the widget and on both API endpoints.
+- **Primary/Secondary text colors** — the single Text Color setting split in two (migration preserves your value).
+- **Live appearance preview** — the preview now renders the widget's real markup and styles, applies Custom CSS as you type, and reflects the font family.
+- **DOCX resilience** — files with Office Math formulas or EMF images no longer fail extraction (formulas inlined as text, drawings stripped, raw-XML fallback).
+- **Structured rate-limit responses** — POST returns HTTP 429 with `{error, code, retryAfter}`; the stream sends the same fields in the SSE error frame. The widget shows a translatable notice and temporarily disables sending on `rate_limited`.
+- Knowledge-base page: upload button disabled until a file is chosen; processing status updates automatically without reloading.
+
+### Fixed
+- Off-topic fallback no longer "sticks": refusal pairs are stripped from the model's history, so later on-topic questions recover; "look at this page"-style requests are answered from page context.
+- Server error events no longer produce a duplicate error bubble in the widget.
+- Conversation/message JSON columns (`metadata`, `toolCalls`, `toolResults`) are stored as real JSON; a migration repairs previously double-encoded rows; escalation metadata merges instead of overwriting.
+- Relation fields no longer leak `ElementQuery` class names into content-search snippets.
+- Appearance page no longer mentions SVG uploads (server never accepted them).
+
+### Removed
+- **Max Messages Per Conversation** — the per-conversation cap only produced permanently dead chats (the widget session never expires); per-session/per-IP rate limits and the daily cap remain. A migration drops the setting; conversation statuses are unaffected.
+
 ## [0.2.0] - 2026-02-23
 
 ### Added

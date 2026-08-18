@@ -12,10 +12,10 @@ Supports **OpenAI** and **Anthropic** as AI providers, with a built-in knowledge
 - **Knowledge base (RAG)** — Upload PDF, DOCX, TXT, or Markdown files. The plugin chunks, embeds, and searches them semantically.
 - **Smart message classification** — Automatically detects greetings, questions, off-topic messages, and escalation requests. Greetings get a natural response; questions trigger tool-based retrieval; off-topic messages return a configurable fallback.
 - **Two-step AI pipeline** — Step 1: message classification and tool selection. Step 2: context-aware answer generation based on tool results.
-- **5 built-in tools** — Knowledge base search, page context extraction, business info retrieval, topic listing, human escalation.
+- **6 built-in tools** — Knowledge base search, page context extraction, site content search, business info retrieval, topic listing, human escalation.
 - **Configurable escalation** — When the agent can't help or the user asks for a human, a contact form appears in the chat. Fully customizable form fields (text, email, phone, textarea, select, checkbox), sensitivity level, and confirmation messages.
 - **Streaming responses** — Real-time Server-Sent Events (SSE) streaming to the chat widget.
-- **Multi-provider** — OpenAI (GPT-4o, GPT-4o Mini, GPT-4 Turbo) and Anthropic (Claude 3.5 Sonnet, Claude 3.7 Sonnet, Claude 3 Haiku).
+- **Multi-provider** — OpenAI (GPT-5.1, GPT-5 Mini, GPT-5 Nano, GPT-4.1, GPT-4.1 Mini, GPT-4o) and Anthropic (Claude Sonnet 5, Claude Sonnet 4.6, Claude Haiku 4.5).
 - **Full admin control** — Every setting configurable from the Craft CMS control panel.
 - **Page targeting** — Show or hide the widget on specific pages using glob URL patterns.
 - **Topic restrictions** — Define allowed/disallowed topics with custom fallback messages.
@@ -24,7 +24,7 @@ Supports **OpenAI** and **Anthropic** as AI providers, with a built-in knowledge
 - **Webhook / CRM integration** — Route escalation form submissions to any external service. Configurable endpoints, HTTP methods, headers, and field mapping with dot-notation support for nested payloads.
 - **Native Craft CP patterns** — Settings pages use Craft's native full-page form, header tabs, Cmd+S save shortcut, unsaved-changes warnings, and breadcrumbs.
 - **Customizable appearance** — Colors, fonts, position, welcome message, avatar, custom CSS/JS injection with live preview.
-- **Rate limiting** — Per-minute message limits and max messages per conversation.
+- **Rate limiting** — Per-session and per-IP per-minute limits, plus an optional site-wide daily cap.
 
 ---
 
@@ -63,7 +63,7 @@ All configuration is done under **Settings**, which contains six tabs:
 | Enable Widget | Toggle the chat widget on/off across your site |
 | AI Provider | OpenAI or Anthropic |
 | API Key | Your provider's API key |
-| Model | GPT-4o, GPT-4o Mini, GPT-4 Turbo, Claude 3.5 Sonnet, Claude 3.7 Sonnet, Claude 3 Haiku |
+| Model | GPT-5.1, GPT-5 Mini, GPT-5 Nano, GPT-4.1, GPT-4.1 Mini, GPT-4o, Claude Sonnet 5, Claude Sonnet 4.6, Claude Haiku 4.5 |
 | Embedding Model | Model used for knowledge base embeddings (OpenAI) |
 | Max Tokens | Maximum tokens per response (100–8192) |
 | Temperature | Randomness (0 = deterministic, 2 = creative) |
@@ -107,7 +107,7 @@ Control the agent's behavior boundaries:
 - **Allowed topics** — If set, the agent only discusses these (one per line)
 - **Disallowed topics** — The agent refuses these (one per line)
 - **Fallback messages** — Custom responses for off-topic and error scenarios
-- **Rate limiting** — Max messages per minute and per conversation
+- **Rate limiting** — Per-session and per-IP messages per minute, optional daily site-wide cap
 
 ### Escalation
 
