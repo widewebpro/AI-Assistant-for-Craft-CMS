@@ -1,9 +1,9 @@
 <?php
 
-namespace widewebpro\aiagent\tools;
+namespace widewebpro\aiassistant\tools;
 
 use Craft;
-use widewebpro\aiagent\records\KnowledgeFileRecord;
+use widewebpro\aiassistant\records\KnowledgeFileRecord;
 
 class ListKnowledgeTopicsTool extends BaseTool
 {

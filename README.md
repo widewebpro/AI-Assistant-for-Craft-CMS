@@ -39,13 +39,13 @@ Supports **OpenAI** and **Anthropic** as AI providers, with a built-in knowledge
 ## Installation
 
 ```bash
-composer require widewebpro/ai-agent
+composer require widewebpro/craft-ai-assistant
 ```
 
 Then install from the Craft control panel under **Settings → Plugins**, or run:
 
 ```bash
-php craft plugin/install ai-agent
+php craft plugin/install craft-ai-assistant
 ```
 
 ---

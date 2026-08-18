@@ -1,6 +1,6 @@
 <?php
 
-namespace widewebpro\aiagent\migrations;
+namespace widewebpro\aiassistant\migrations;
 
 use craft\db\Migration;
 
@@ -19,19 +19,19 @@ class Install extends Migration
 
     public function safeDown(): bool
     {
-        $this->dropTableIfExists('{{%aiagent_embeddings}}');
-        $this->dropTableIfExists('{{%aiagent_knowledge_chunks}}');
-        $this->dropTableIfExists('{{%aiagent_knowledge_files}}');
-        $this->dropTableIfExists('{{%aiagent_messages}}');
-        $this->dropTableIfExists('{{%aiagent_conversations}}');
-        $this->dropTableIfExists('{{%aiagent_page_rules}}');
+        $this->dropTableIfExists('{{%aiassistant_embeddings}}');
+        $this->dropTableIfExists('{{%aiassistant_knowledge_chunks}}');
+        $this->dropTableIfExists('{{%aiassistant_knowledge_files}}');
+        $this->dropTableIfExists('{{%aiassistant_messages}}');
+        $this->dropTableIfExists('{{%aiassistant_conversations}}');
+        $this->dropTableIfExists('{{%aiassistant_page_rules}}');
 
         return true;
     }
 
     private function _createConversationsTable(): void
     {
-        $this->createTable('{{%aiagent_conversations}}', [
+        $this->createTable('{{%aiassistant_conversations}}', [
             'id' => $this->primaryKey(),
             'sessionId' => $this->string(36)->notNull(),
             'pageUrl' => $this->string(500)->null(),
@@ -43,14 +43,14 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%aiagent_conversations}}', ['sessionId'], true);
-        $this->createIndex(null, '{{%aiagent_conversations}}', ['status']);
-        $this->createIndex(null, '{{%aiagent_conversations}}', ['dateCreated']);
+        $this->createIndex(null, '{{%aiassistant_conversations}}', ['sessionId'], true);
+        $this->createIndex(null, '{{%aiassistant_conversations}}', ['status']);
+        $this->createIndex(null, '{{%aiassistant_conversations}}', ['dateCreated']);
     }
 
     private function _createMessagesTable(): void
     {
-        $this->createTable('{{%aiagent_messages}}', [
+        $this->createTable('{{%aiassistant_messages}}', [
             'id' => $this->primaryKey(),
             'conversationId' => $this->integer()->notNull(),
             'role' => $this->string(20)->notNull(),
@@ -62,14 +62,14 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->addForeignKey(null, '{{%aiagent_messages}}', ['conversationId'], '{{%aiagent_conversations}}', ['id'], 'CASCADE');
-        $this->createIndex(null, '{{%aiagent_messages}}', ['conversationId']);
-        $this->createIndex(null, '{{%aiagent_messages}}', ['role']);
+        $this->addForeignKey(null, '{{%aiassistant_messages}}', ['conversationId'], '{{%aiassistant_conversations}}', ['id'], 'CASCADE');
+        $this->createIndex(null, '{{%aiassistant_messages}}', ['conversationId']);
+        $this->createIndex(null, '{{%aiassistant_messages}}', ['role']);
     }
 
     private function _createKnowledgeFilesTable(): void
     {
-        $this->createTable('{{%aiagent_knowledge_files}}', [
+        $this->createTable('{{%aiassistant_knowledge_files}}', [
             'id' => $this->primaryKey(),
             'filename' => $this->string(255)->notNull(),
             'originalName' => $this->string(255)->notNull(),
@@ -82,12 +82,12 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->createIndex(null, '{{%aiagent_knowledge_files}}', ['status']);
+        $this->createIndex(null, '{{%aiassistant_knowledge_files}}', ['status']);
     }
 
     private function _createKnowledgeChunksTable(): void
     {
-        $this->createTable('{{%aiagent_knowledge_chunks}}', [
+        $this->createTable('{{%aiassistant_knowledge_chunks}}', [
             'id' => $this->primaryKey(),
             'fileId' => $this->integer()->notNull(),
             'content' => $this->text()->notNull(),
@@ -98,15 +98,15 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->addForeignKey(null, '{{%aiagent_knowledge_chunks}}', ['fileId'], '{{%aiagent_knowledge_files}}', ['id'], 'CASCADE');
-        $this->createIndex(null, '{{%aiagent_knowledge_chunks}}', ['fileId']);
+        $this->addForeignKey(null, '{{%aiassistant_knowledge_chunks}}', ['fileId'], '{{%aiassistant_knowledge_files}}', ['id'], 'CASCADE');
+        $this->createIndex(null, '{{%aiassistant_knowledge_chunks}}', ['fileId']);
 
-        $this->execute('ALTER TABLE {{%aiagent_knowledge_chunks}} ADD FULLTEXT INDEX idx_chunk_content (content)');
+        $this->execute('ALTER TABLE {{%aiassistant_knowledge_chunks}} ADD FULLTEXT INDEX idx_chunk_content (content)');
     }
 
     private function _createEmbeddingsTable(): void
     {
-        $this->createTable('{{%aiagent_embeddings}}', [
+        $this->createTable('{{%aiassistant_embeddings}}', [
             'id' => $this->primaryKey(),
             'chunkId' => $this->integer()->notNull(),
             'embedding' => 'LONGBLOB NOT NULL',
@@ -115,8 +115,8 @@ class Install extends Migration
             'uid' => $this->uid(),
         ]);
 
-        $this->addForeignKey(null, '{{%aiagent_embeddings}}', ['chunkId'], '{{%aiagent_knowledge_chunks}}', ['id'], 'CASCADE');
-        $this->createIndex(null, '{{%aiagent_embeddings}}', ['chunkId'], true);
+        $this->addForeignKey(null, '{{%aiassistant_embeddings}}', ['chunkId'], '{{%aiassistant_knowledge_chunks}}', ['id'], 'CASCADE');
+        $this->createIndex(null, '{{%aiassistant_embeddings}}', ['chunkId'], true);
     }
 
 }

@@ -1,16 +1,16 @@
 <?php
 
-namespace widewebpro\aiagent\services;
+namespace widewebpro\aiassistant\services;
 
 use craft\base\Component;
-use widewebpro\aiagent\events\RegisterToolsEvent;
-use widewebpro\aiagent\tools\BaseTool;
-use widewebpro\aiagent\tools\SearchKnowledgeBaseTool;
-use widewebpro\aiagent\tools\GetPageContextTool;
-use widewebpro\aiagent\tools\GetBusinessInfoTool;
-use widewebpro\aiagent\tools\ListKnowledgeTopicsTool;
-use widewebpro\aiagent\tools\SearchContentTool;
-use widewebpro\aiagent\tools\EscalateTool;
+use widewebpro\aiassistant\events\RegisterToolsEvent;
+use widewebpro\aiassistant\tools\BaseTool;
+use widewebpro\aiassistant\tools\SearchKnowledgeBaseTool;
+use widewebpro\aiassistant\tools\GetPageContextTool;
+use widewebpro\aiassistant\tools\GetBusinessInfoTool;
+use widewebpro\aiassistant\tools\ListKnowledgeTopicsTool;
+use widewebpro\aiassistant\tools\SearchContentTool;
+use widewebpro\aiassistant\tools\EscalateTool;
 
 class ToolRegistry extends Component
 {
@@ -18,8 +18,8 @@ class ToolRegistry extends Component
      * @event RegisterToolsEvent Lets other plugins add, replace or remove chat tools.
      *
      * ```php
-     * use widewebpro\aiagent\events\RegisterToolsEvent;
-     * use widewebpro\aiagent\services\ToolRegistry;
+     * use widewebpro\aiassistant\events\RegisterToolsEvent;
+     * use widewebpro\aiassistant\services\ToolRegistry;
      * use yii\base\Event;
      *
      * Event::on(ToolRegistry::class, ToolRegistry::EVENT_REGISTER_TOOLS,
@@ -42,7 +42,7 @@ class ToolRegistry extends Component
         $this->register(new GetBusinessInfoTool());
         $this->register(new ListKnowledgeTopicsTool());
 
-        $settings = \widewebpro\aiagent\Plugin::getInstance()?->getSettings();
+        $settings = \widewebpro\aiassistant\Plugin::getInstance()?->getSettings();
         if ($settings && $settings->contentSearchEnabled) {
             $this->register(new SearchContentTool());
         }
@@ -102,7 +102,7 @@ class ToolRegistry extends Component
         try {
             return $tool->execute($params);
         } catch (\Throwable $e) {
-            \Craft::error("Tool '{$name}' failed: " . $e->getMessage(), 'ai-agent');
+            \Craft::error("Tool '{$name}' failed: " . $e->getMessage(), 'craft-ai-assistant');
             return json_encode(['error' => "Tool execution failed: " . $e->getMessage()]);
         }
     }

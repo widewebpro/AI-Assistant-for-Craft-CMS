@@ -1,12 +1,12 @@
 <?php
 
-namespace widewebpro\aiagent\controllers;
+namespace widewebpro\aiassistant\controllers;
 
 use Craft;
 use craft\web\Controller;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\ConversationRecord;
-use widewebpro\aiagent\records\MessageRecord;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\ConversationRecord;
+use widewebpro\aiassistant\records\MessageRecord;
 use yii\web\Response;
 
 class DefaultController extends Controller
@@ -17,7 +17,7 @@ class DefaultController extends Controller
             return false;
         }
 
-        $this->requirePermission('aiAgent:viewConversations');
+        $this->requirePermission('aiAssistant:viewConversations');
         return true;
     }
 
@@ -34,13 +34,13 @@ class DefaultController extends Controller
             ->all();
 
         $embeddingModel = Plugin::getInstance()->getSettings()->embeddingModel;
-        $totalChunks = (int)(new \yii\db\Query())->from('{{%aiagent_knowledge_chunks}}')->count();
+        $totalChunks = (int)(new \yii\db\Query())->from('{{%aiassistant_knowledge_chunks}}')->count();
         $vectorCount = (int)(new \yii\db\Query())
-            ->from('{{%aiagent_embeddings}}')
+            ->from('{{%aiassistant_embeddings}}')
             ->where(['model' => $embeddingModel])
             ->count();
 
-        return $this->renderTemplate('ai-agent/_index', [
+        return $this->renderTemplate('craft-ai-assistant/_index', [
             'plugin' => Plugin::getInstance(),
             'totalConversations' => $totalConversations,
             'activeConversations' => $activeConversations,

@@ -1,10 +1,10 @@
 <?php
 
-namespace widewebpro\aiagent\jobs;
+namespace widewebpro\aiassistant\jobs;
 
 use craft\queue\BaseJob;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\ConversationRecord;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\ConversationRecord;
 
 class FireEscalationWebhooksJob extends BaseJob
 {

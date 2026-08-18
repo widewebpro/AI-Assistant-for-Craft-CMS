@@ -1,6 +1,6 @@
 <?php
 
-namespace widewebpro\aiagent\tools;
+namespace widewebpro\aiassistant\tools;
 
 use Craft;
 use GuzzleHttp\Client;
@@ -88,7 +88,7 @@ class GetPageContextTool extends BaseTool
                 $context['text_content'] = $extracted['text'];
             }
         } catch (\Throwable $e) {
-            Craft::warning("GetPageContext fetch failed: " . $e->getMessage(), 'ai-agent');
+            Craft::warning("GetPageContext fetch failed: " . $e->getMessage(), 'craft-ai-assistant');
         }
 
         return json_encode($context, JSON_PRETTY_PRINT);

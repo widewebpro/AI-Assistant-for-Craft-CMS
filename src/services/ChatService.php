@@ -1,14 +1,14 @@
 <?php
 
-namespace widewebpro\aiagent\services;
+namespace widewebpro\aiassistant\services;
 
 use Craft;
 use craft\base\Component;
 use craft\helpers\DateTimeHelper;
 use craft\helpers\StringHelper;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\ConversationRecord;
-use widewebpro\aiagent\records\MessageRecord;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\ConversationRecord;
+use widewebpro\aiassistant\records\MessageRecord;
 
 class ChatService extends Component
 {
@@ -75,8 +75,8 @@ class ChatService extends Component
         $since = DateTimeHelper::currentUTCDateTime()->modify("-{$seconds} seconds")->format('Y-m-d H:i:s');
 
         return (int)(new \yii\db\Query())
-            ->from('{{%aiagent_messages}} m')
-            ->innerJoin('{{%aiagent_conversations}} c', 'm.conversationId = c.id')
+            ->from('{{%aiassistant_messages}} m')
+            ->innerJoin('{{%aiassistant_conversations}} c', 'm.conversationId = c.id')
             ->where(['c.sessionId' => $sessionId, 'm.role' => 'user'])
             ->andWhere(['>=', 'm.dateCreated', $since])
             ->count();
@@ -92,8 +92,8 @@ class ChatService extends Component
         $since = DateTimeHelper::currentUTCDateTime()->modify("-{$seconds} seconds")->format('Y-m-d H:i:s');
 
         return (int)(new \yii\db\Query())
-            ->from('{{%aiagent_messages}} m')
-            ->innerJoin('{{%aiagent_conversations}} c', 'm.conversationId = c.id')
+            ->from('{{%aiassistant_messages}} m')
+            ->innerJoin('{{%aiassistant_conversations}} c', 'm.conversationId = c.id')
             ->where(['c.ipAddress' => $ip, 'm.role' => 'user'])
             ->andWhere(['>=', 'm.dateCreated', $since])
             ->count();

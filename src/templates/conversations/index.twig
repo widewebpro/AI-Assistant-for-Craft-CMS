@@ -5,7 +5,7 @@
 {% block content %}
 <div class="pane">
     <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center;">
-        <form method="get" action="{{ cpUrl('ai-agent/conversations') }}" style="display: flex; gap: 12px; align-items: center;">
+        <form method="get" action="{{ cpUrl('craft-ai-assistant/conversations') }}" style="display: flex; gap: 12px; align-items: center;">
             <input type="text" name="search" value="{{ search }}" class="text" placeholder="Session, page URL or message text…" autocomplete="off" style="width: 260px;">
             <select name="status" class="text">
                 <option value="">All Statuses</option>
@@ -14,7 +14,7 @@
             </select>
             <button type="submit" class="btn">Filter</button>
             {% if search or status %}
-                <a href="{{ cpUrl('ai-agent/conversations') }}" class="btn">Reset</a>
+                <a href="{{ cpUrl('craft-ai-assistant/conversations') }}" class="btn">Reset</a>
             {% endif %}
         </form>
         <span class="light" style="margin-left: auto;">{{ total }} conversation{{ total != 1 ? 's' : '' }}</span>
@@ -45,7 +45,7 @@
                 </td>
                 <td>{{ c.ipAddress ?? '—' }}</td>
                 <td>{{ c.dateCreated }}</td>
-                <td><a href="{{ cpUrl('ai-agent/conversations/' ~ c.id) }}" class="btn small">View</a></td>
+                <td><a href="{{ cpUrl('craft-ai-assistant/conversations/' ~ c.id) }}" class="btn small">View</a></td>
             </tr>
             {% endfor %}
         </tbody>
@@ -57,7 +57,7 @@
             {% if p == page %}
                 <span class="btn small disabled">{{ p }}</span>
             {% else %}
-                <a href="{{ cpUrl('ai-agent/conversations', { page: p, status: status, search: search }) }}" class="btn small">{{ p }}</a>
+                <a href="{{ cpUrl('craft-ai-assistant/conversations', { page: p, status: status, search: search }) }}" class="btn small">{{ p }}</a>
             {% endif %}
         {% endfor %}
     </div>

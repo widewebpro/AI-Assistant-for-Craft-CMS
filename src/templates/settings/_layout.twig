@@ -3,22 +3,22 @@
 {% set selectedTab = settingsTab ?? "general" %}
 
 {% set tabs = {} %}
-{% if currentUser.can('aiAgent:manageSettings') %}
+{% if currentUser.can('aiAssistant:manageSettings') %}
     {% set tabs = tabs|merge({
-        'general': { label: 'General', url: cpUrl('ai-agent/settings') },
-        'appearance': { label: 'Appearance', url: cpUrl('ai-agent/settings/appearance') },
+        'general': { label: 'General', url: cpUrl('craft-ai-assistant/settings') },
+        'appearance': { label: 'Appearance', url: cpUrl('craft-ai-assistant/settings/appearance') },
     }) %}
 {% endif %}
-{% if currentUser.can('aiAgent:manageKnowledgeBase') %}
+{% if currentUser.can('aiAssistant:manageKnowledgeBase') %}
     {% set tabs = tabs|merge({
-        'knowledge-base': { label: 'Knowledge Base', url: cpUrl('ai-agent/settings/knowledge-base') },
+        'knowledge-base': { label: 'Knowledge Base', url: cpUrl('craft-ai-assistant/settings/knowledge-base') },
     }) %}
 {% endif %}
-{% if currentUser.can('aiAgent:manageSettings') %}
+{% if currentUser.can('aiAssistant:manageSettings') %}
     {% set tabs = tabs|merge({
-        'pages': { label: 'Pages', url: cpUrl('ai-agent/settings/pages') },
-        'restrictions': { label: 'Restrictions', url: cpUrl('ai-agent/settings/restrictions') },
-        'escalation': { label: 'Escalation', url: cpUrl('ai-agent/settings/escalation') },
+        'pages': { label: 'Pages', url: cpUrl('craft-ai-assistant/settings/pages') },
+        'restrictions': { label: 'Restrictions', url: cpUrl('craft-ai-assistant/settings/restrictions') },
+        'escalation': { label: 'Escalation', url: cpUrl('craft-ai-assistant/settings/escalation') },
     }) %}
 {% endif %}
 

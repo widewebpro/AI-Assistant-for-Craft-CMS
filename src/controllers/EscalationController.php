@@ -1,10 +1,10 @@
 <?php
 
-namespace widewebpro\aiagent\controllers;
+namespace widewebpro\aiassistant\controllers;
 
 use Craft;
 use craft\web\Controller;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 use yii\web\Response;
 
 class EscalationController extends Controller
@@ -15,7 +15,7 @@ class EscalationController extends Controller
             return false;
         }
 
-        $this->requirePermission('aiAgent:manageSettings');
+        $this->requirePermission('aiAssistant:manageSettings');
         return true;
     }
 
@@ -38,7 +38,7 @@ class EscalationController extends Controller
             $fieldMapRows['row' . $i] = $map;
         }
 
-        return $this->renderTemplate('ai-agent/settings/escalation', [
+        return $this->renderTemplate('craft-ai-assistant/settings/escalation', [
             'plugin' => Plugin::getInstance(),
             'settings' => $settings,
             'fieldRows' => $fieldRows,

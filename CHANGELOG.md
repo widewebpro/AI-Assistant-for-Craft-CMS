@@ -8,7 +8,7 @@ All notable changes to AI Assistant for Craft CMS will be documented in this fil
 - **Site content search tool** (`search_site_content`) — the agent can search live entries by keyword (titles, URLs, snippets), with an on/off switch and optional section allow-list in Restrictions. Falls back to an OR query when a multi-word search finds nothing.
 - **Deterministic page-context routing** — when a question isn't about the current page and retrieval finds nothing, the plugin itself consults the page context once before giving up; grounding rules prevent the model from re-judging topicality.
 - **Robust step-1 classification via forced tool choice** — greetings/off-topic verdicts arrive as a `classify_message` tool call on both providers (works on every dropdown model), replacing fragile magic-string parsing.
-- **Widget interface localization** — all widget chrome strings are served translated via Craft's translation system; the plugin ships an English key reference (`src/translations/en/ai-agent.php`) to copy into your project's `translations/<lang>/ai-agent.php`.
+- **Widget interface localization** — all widget chrome strings are served translated via Craft's translation system; the plugin ships an English key reference (`src/translations/en/craft-ai-assistant.php`) to copy into your project's `translations/<lang>/craft-ai-assistant.php`.
 - **Escalation webhooks moved to the queue** — form submission responds instantly; webhook calls run in a non-retryable queue job and their results are merged into conversation metadata.
 - **Max message length setting** (100–8000 chars, default 1000) — enforced in the widget and on both API endpoints.
 - **Primary/Secondary text colors** — the single Text Color setting split in two (migration preserves your value).
@@ -23,6 +23,9 @@ All notable changes to AI Assistant for Craft CMS will be documented in this fil
 - Conversation/message JSON columns (`metadata`, `toolCalls`, `toolResults`) are stored as real JSON; a migration repairs previously double-encoded rows; escalation metadata merges instead of overwriting.
 - Relation fields no longer leak `ElementQuery` class names into content-search snippets.
 - Appearance page no longer mentions SVG uploads (server never accepted them).
+
+### Changed
+- **Package renamed** to `widewebpro/craft-ai-assistant` (was `widewebpro/ai-agent`), plugin handle changed to `craft-ai-assistant`, display name to “AI Assistant”, PHP namespace to `widewebpro\aiassistant`, and DB tables to `aiassistant_*`. Existing `ai-agent` installs are treated as a different plugin: install `craft-ai-assistant` fresh (settings and data do not carry over automatically).
 
 ### Removed
 - **Max Messages Per Conversation** — the per-conversation cap only produced permanently dead chats (the widget session never expires); per-session/per-IP rate limits and the daily cap remain. A migration drops the setting; conversation statuses are unaffected.
@@ -75,7 +78,7 @@ All notable changes to AI Assistant for Craft CMS will be documented in this fil
 ### Changed
 - Settings navigation restructured: main sidebar now shows Dashboard, Conversations, and Settings. All configuration lives under Settings with tabbed sub-navigation (General, Appearance, Knowledge Base, Pages, Restrictions, Escalation).
 - Plugin renamed to "AI Assistant for Craft CMS".
-- Vendor/namespace changed from `craftcms/ai-agent` to `widewebpro/ai-agent`.
+- Vendor/namespace changed from `craftcms/ai-assistant` to `widewebpro/ai-agent`.
 - Developer info updated to Wideweb (https://wideweb.pro).
 - Widget asset loading now uses filesystem path instead of Yii alias for reliability across installations.
 

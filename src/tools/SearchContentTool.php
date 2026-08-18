@@ -1,10 +1,10 @@
 <?php
 
-namespace widewebpro\aiagent\tools;
+namespace widewebpro\aiassistant\tools;
 
 use Craft;
 use craft\elements\Entry;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 
 class SearchContentTool extends BaseTool
 {

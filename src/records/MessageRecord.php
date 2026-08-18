@@ -1,6 +1,6 @@
 <?php
 
-namespace widewebpro\aiagent\records;
+namespace widewebpro\aiassistant\records;
 
 use craft\db\ActiveRecord;
 
@@ -18,7 +18,7 @@ class MessageRecord extends ActiveRecord
 {
     public static function tableName(): string
     {
-        return '{{%aiagent_messages}}';
+        return '{{%aiassistant_messages}}';
     }
 
     public function getConversation(): \yii\db\ActiveQuery

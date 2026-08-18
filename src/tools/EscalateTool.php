@@ -1,9 +1,9 @@
 <?php
 
-namespace widewebpro\aiagent\tools;
+namespace widewebpro\aiassistant\tools;
 
 use Craft;
-use widewebpro\aiagent\records\ConversationRecord;
+use widewebpro\aiassistant\records\ConversationRecord;
 
 class EscalateTool extends BaseTool
 {
@@ -35,7 +35,7 @@ class EscalateTool extends BaseTool
     {
         $reason = $params['reason'] ?? 'User requested human assistance';
 
-        Craft::info("Conversation escalated: {$reason}", 'ai-agent');
+        Craft::info("Conversation escalated: {$reason}", 'craft-ai-assistant');
 
         return json_encode([
             'status' => 'escalated',

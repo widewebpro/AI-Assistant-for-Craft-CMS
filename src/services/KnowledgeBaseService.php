@@ -1,15 +1,15 @@
 <?php
 
-namespace widewebpro\aiagent\services;
+namespace widewebpro\aiassistant\services;
 
 use Craft;
 use craft\base\Component;
 use craft\helpers\FileHelper;
 use craft\helpers\StringHelper;
-use widewebpro\aiagent\jobs\ProcessKnowledgeFileJob;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\KnowledgeFileRecord;
-use widewebpro\aiagent\records\KnowledgeChunkRecord;
+use widewebpro\aiassistant\jobs\ProcessKnowledgeFileJob;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\KnowledgeFileRecord;
+use widewebpro\aiassistant\records\KnowledgeChunkRecord;
 
 class KnowledgeBaseService extends Component
 {
@@ -28,7 +28,7 @@ class KnowledgeBaseService extends Component
 
     public function getStoragePath(): string
     {
-        $path = Craft::$app->getPath()->getStoragePath() . '/ai-agent/knowledge-base';
+        $path = Craft::$app->getPath()->getStoragePath() . '/craft-ai-assistant/knowledge-base';
         if (!is_dir($path)) {
             mkdir($path, 0775, true);
         }
@@ -121,7 +121,7 @@ class KnowledgeBaseService extends Component
         } catch (\Throwable $e) {
             $record->status = 'error';
             $record->save(false);
-            Craft::error("KB file reprocessing failed: " . $e->getMessage(), 'ai-agent');
+            Craft::error("KB file reprocessing failed: " . $e->getMessage(), 'craft-ai-assistant');
             throw $e;
         }
     }
@@ -228,7 +228,7 @@ class KnowledgeBaseService extends Component
             try {
                 $phpWord = \PhpOffice\PhpWord\IOFactory::load($sanitized ?? $filePath);
             } catch (\Throwable $e) {
-                Craft::warning("PhpWord could not read \"{$filePath}\", falling back to raw XML extraction: " . $e->getMessage(), 'ai-agent');
+                Craft::warning("PhpWord could not read \"{$filePath}\", falling back to raw XML extraction: " . $e->getMessage(), 'craft-ai-assistant');
                 return $this->_extractDocxRaw($filePath);
             }
 
@@ -298,7 +298,7 @@ class KnowledgeBaseService extends Component
             }
         }
 
-        $tmpPath = tempnam(sys_get_temp_dir(), 'aiagent-docx');
+        $tmpPath = tempnam(sys_get_temp_dir(), 'aiassistant-docx');
         if ($tmpPath === false || !copy($filePath, $tmpPath)) {
             return null;
         }

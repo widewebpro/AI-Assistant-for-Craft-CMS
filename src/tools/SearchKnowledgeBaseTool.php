@@ -1,8 +1,8 @@
 <?php
 
-namespace widewebpro\aiagent\tools;
+namespace widewebpro\aiassistant\tools;
 
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 
 class SearchKnowledgeBaseTool extends BaseTool
 {

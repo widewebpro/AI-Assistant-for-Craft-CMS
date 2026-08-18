@@ -1,6 +1,6 @@
 <?php
 
-namespace widewebpro\aiagent\records;
+namespace widewebpro\aiassistant\records;
 
 use craft\db\ActiveRecord;
 
@@ -19,7 +19,7 @@ class KnowledgeFileRecord extends ActiveRecord
 {
     public static function tableName(): string
     {
-        return '{{%aiagent_knowledge_files}}';
+        return '{{%aiassistant_knowledge_files}}';
     }
 
     public function getChunks(): \yii\db\ActiveQuery

@@ -3,7 +3,7 @@
 {% set selectedSubnavItem = "dashboard" %}
 
 {% block content %}
-<div class="ai-agent-dashboard">
+<div class="craft-ai-assistant-dashboard">
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
         <div class="pane">
             <h3 class="light" style="margin-bottom: 4px;">Total Conversations</h3>
@@ -30,7 +30,7 @@
         <p style="font-size: 2em; font-weight: 600; margin: 0;{{ vectorsMissing > 0 ? ' color: #dc2626;' : '' }}">{{ vectorCount }} <span class="light" style="font-size: 0.5em; font-weight: 400;">of {{ totalChunks }} chunks</span></p>
         <p class="light" style="margin: 4px 0 0; font-size: 12px;">
             for <code>{{ embeddingModel }}</code>.
-            {%- if vectorsMissing > 0 %} {{ vectorsMissing }} chunk(s) have no vector for this model — reprocess those files in <a href="{{ cpUrl('ai-agent/settings/knowledge-base') }}">Knowledge Base</a>, or semantic search silently falls back to keyword matching for them.{% endif %}
+            {%- if vectorsMissing > 0 %} {{ vectorsMissing }} chunk(s) have no vector for this model — reprocess those files in <a href="{{ cpUrl('craft-ai-assistant/settings/knowledge-base') }}">Knowledge Base</a>, or semantic search silently falls back to keyword matching for them.{% endif %}
         </p>
     </div>
     {% endif %}
@@ -58,13 +58,13 @@
                         {{ conversation.status | capitalize }}
                     </td>
                     <td>{{ conversation.dateCreated }}</td>
-                    <td><a href="{{ cpUrl('ai-agent/conversations/' ~ conversation.id) }}">View</a></td>
+                    <td><a href="{{ cpUrl('craft-ai-assistant/conversations/' ~ conversation.id) }}">View</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <p class="light">No conversations yet. Enable the widget in <a href="{{ cpUrl('ai-agent/settings') }}">Settings</a> to get started.</p>
+        <p class="light">No conversations yet. Enable the widget in <a href="{{ cpUrl('craft-ai-assistant/settings') }}">Settings</a> to get started.</p>
         {% endif %}
     </div>
 </div>

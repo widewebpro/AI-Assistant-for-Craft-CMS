@@ -1,12 +1,12 @@
-{% extends "ai-agent/settings/_layout" %}
+{% extends "craft-ai-assistant/settings/_layout" %}
 {% import "_includes/forms" as forms %}
 {% set title = "Settings" %}
 {% set settingsTab = "general" %}
 {% set fullPageForm = true %}
 
 {% block content %}
-    {{ actionInput('ai-agent/settings/save') }}
-    {{ redirectInput('ai-agent/settings') }}
+    {{ actionInput('craft-ai-assistant/settings/save') }}
+    {{ redirectInput('craft-ai-assistant/settings') }}
 
     {{ parent() }}
 {% endblock %}
@@ -17,7 +17,7 @@
 
         <p class="light">
             AI provider, API keys, models and the token limit are configured by an admin in
-            <a href="{{ cpUrl('settings/plugins/ai-agent') }}">Settings &rarr; Plugins &rarr; {{ plugin.name }}</a>.
+            <a href="{{ cpUrl('settings/plugins/craft-ai-assistant') }}">Settings &rarr; Plugins &rarr; {{ plugin.name }}</a>.
         </p>
 
         {{ forms.lightswitchField({
@@ -112,7 +112,7 @@
 
         {{ forms.textareaField({
             label: "Allowed CORS Origins",
-            instructions: "Only for headless front ends that fetch `/ai-agent/widget-config` from another origin. One origin per line (e.g. `https://app.example.com`), or `*` to allow any. Leave empty for same-origin only.",
+            instructions: "Only for headless front ends that fetch `/craft-ai-assistant/widget-config` from another origin. One origin per line (e.g. `https://app.example.com`), or `*` to allow any. Leave empty for same-origin only.",
             id: "corsAllowedOrigins",
             name: "corsAllowedOrigins",
             value: settings.corsAllowedOrigins,

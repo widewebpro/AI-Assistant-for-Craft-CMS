@@ -1,6 +1,6 @@
 <?php
 
-namespace widewebpro\aiagent\models;
+namespace widewebpro\aiassistant\models;
 
 use craft\base\Model;
 

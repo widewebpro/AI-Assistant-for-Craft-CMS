@@ -1,10 +1,10 @@
 <?php
 
-namespace widewebpro\aiagent\controllers;
+namespace widewebpro\aiassistant\controllers;
 
 use Craft;
 use craft\web\Controller;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 use yii\web\Response;
 
 class RestrictionsController extends Controller
@@ -15,13 +15,13 @@ class RestrictionsController extends Controller
             return false;
         }
 
-        $this->requirePermission('aiAgent:manageSettings');
+        $this->requirePermission('aiAssistant:manageSettings');
         return true;
     }
 
     public function actionIndex(): Response
     {
-        return $this->renderTemplate('ai-agent/settings/restrictions', [
+        return $this->renderTemplate('craft-ai-assistant/settings/restrictions', [
             'plugin' => Plugin::getInstance(),
             'settings' => Plugin::getInstance()->getSettings(),
         ]);

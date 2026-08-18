@@ -1,6 +1,6 @@
 <?php
 
-namespace widewebpro\aiagent\tools;
+namespace widewebpro\aiassistant\tools;
 
 abstract class BaseTool
 {

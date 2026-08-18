@@ -1,14 +1,14 @@
 <?php
 
-namespace widewebpro\aiagent\controllers;
+namespace widewebpro\aiassistant\controllers;
 
 use Craft;
 use craft\db\Query;
 use craft\helpers\DateTimeHelper;
 use craft\web\Controller;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\KnowledgeFileRecord;
-use widewebpro\aiagent\services\KnowledgeBaseService;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\KnowledgeFileRecord;
+use widewebpro\aiassistant\services\KnowledgeBaseService;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
@@ -20,13 +20,13 @@ class KnowledgeBaseController extends Controller
             return false;
         }
 
-        $this->requirePermission('aiAgent:manageKnowledgeBase');
+        $this->requirePermission('aiAssistant:manageKnowledgeBase');
         return true;
     }
 
     public function actionIndex(): Response
     {
-        return $this->renderTemplate('ai-agent/settings/knowledge-base', [
+        return $this->renderTemplate('craft-ai-assistant/settings/knowledge-base', [
             'plugin' => Plugin::getInstance(),
             'embeddingReady' => Plugin::getInstance()->provider->hasEmbeddingKey(),
             'files' => $this->_fileRows(),
@@ -55,7 +55,7 @@ class KnowledgeBaseController extends Controller
             ->format('Y-m-d H:i:s');
 
         $rows = (new Query())
-            ->from('{{%aiagent_knowledge_files}}')
+            ->from('{{%aiassistant_knowledge_files}}')
             ->orderBy(['dateCreated' => SORT_DESC])
             ->all();
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace widewebpro\aiagent\controllers;
+namespace widewebpro\aiassistant\controllers;
 
 use Craft;
 use craft\web\Controller;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\ConversationRecord;
-use widewebpro\aiagent\records\MessageRecord;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\ConversationRecord;
+use widewebpro\aiassistant\records\MessageRecord;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -18,7 +18,7 @@ class ConversationsController extends Controller
             return false;
         }
 
-        $this->requirePermission('aiAgent:viewConversations');
+        $this->requirePermission('aiAssistant:viewConversations');
         return true;
     }
 
@@ -38,7 +38,7 @@ class ConversationsController extends Controller
             ->limit($perPage)
             ->all();
 
-        return $this->renderTemplate('ai-agent/conversations/index', [
+        return $this->renderTemplate('craft-ai-assistant/conversations/index', [
             'plugin' => Plugin::getInstance(),
             'conversations' => $conversations,
             'total' => $total,
@@ -61,7 +61,7 @@ class ConversationsController extends Controller
 
         if ($search !== '') {
             $messageMatch = MessageRecord::find()
-                ->where('[[conversationId]] = {{%aiagent_conversations}}.[[id]]')
+                ->where('[[conversationId]] = {{%aiassistant_conversations}}.[[id]]')
                 ->andWhere(['like', 'content', $search]);
 
             $query->andWhere([
@@ -98,7 +98,7 @@ class ConversationsController extends Controller
             }
         }
 
-        return $this->renderTemplate('ai-agent/conversations/view', [
+        return $this->renderTemplate('craft-ai-assistant/conversations/view', [
             'plugin' => Plugin::getInstance(),
             'conversation' => $conversation,
             'messages' => $messages,

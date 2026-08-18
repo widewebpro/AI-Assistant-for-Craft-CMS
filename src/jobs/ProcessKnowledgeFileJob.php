@@ -1,10 +1,10 @@
 <?php
 
-namespace widewebpro\aiagent\jobs;
+namespace widewebpro\aiassistant\jobs;
 
 use craft\queue\BaseJob;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\KnowledgeFileRecord;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\KnowledgeFileRecord;
 use yii\queue\RetryableJobInterface;
 
 class ProcessKnowledgeFileJob extends BaseJob implements RetryableJobInterface

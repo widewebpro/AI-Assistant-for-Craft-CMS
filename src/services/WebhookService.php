@@ -1,12 +1,12 @@
 <?php
 
-namespace widewebpro\aiagent\services;
+namespace widewebpro\aiassistant\services;
 
 use Craft;
 use craft\base\Component;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 
 class WebhookService extends Component
 {
@@ -75,7 +75,7 @@ class WebhookService extends Component
 
             $statusCode = $response->getStatusCode();
 
-            Craft::info("Webhook '{$name}' sent to {$action['url']} — HTTP {$statusCode}", 'ai-agent');
+            Craft::info("Webhook '{$name}' sent to {$action['url']} — HTTP {$statusCode}", 'craft-ai-assistant');
 
             return [
                 'name' => $name,
@@ -86,7 +86,7 @@ class WebhookService extends Component
         } catch (RequestException $e) {
             $status = $e->getResponse()?->getStatusCode() ?? 0;
 
-            Craft::error("Webhook '{$name}' failed (HTTP {$status}): {$e->getMessage()}", 'ai-agent');
+            Craft::error("Webhook '{$name}' failed (HTTP {$status}): {$e->getMessage()}", 'craft-ai-assistant');
 
             return [
                 'name' => $name,
@@ -95,7 +95,7 @@ class WebhookService extends Component
                 'error' => $this->_truncate($e->getMessage()),
             ];
         } catch (\Throwable $e) {
-            Craft::error("Webhook '{$name}' failed: {$e->getMessage()}", 'ai-agent');
+            Craft::error("Webhook '{$name}' failed: {$e->getMessage()}", 'craft-ai-assistant');
 
             return [
                 'name' => $name,

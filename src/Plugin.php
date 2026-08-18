@@ -1,6 +1,6 @@
 <?php
 
-namespace widewebpro\aiagent;
+namespace widewebpro\aiassistant;
 
 use Craft;
 use craft\base\Plugin as BasePlugin;
@@ -14,15 +14,15 @@ use craft\services\UserPermissions;
 use craft\web\UrlManager;
 use craft\web\View;
 use craft\web\twig\variables\CraftVariable;
-use widewebpro\aiagent\models\Settings;
-use widewebpro\aiagent\services\AiService;
-use widewebpro\aiagent\services\ChatService;
-use widewebpro\aiagent\services\EmbeddingService;
-use widewebpro\aiagent\services\KnowledgeBaseService;
-use widewebpro\aiagent\services\ProviderService;
-use widewebpro\aiagent\services\ToolRegistry;
-use widewebpro\aiagent\services\WebhookService;
-use widewebpro\aiagent\services\WidgetService;
+use widewebpro\aiassistant\models\Settings;
+use widewebpro\aiassistant\services\AiService;
+use widewebpro\aiassistant\services\ChatService;
+use widewebpro\aiassistant\services\EmbeddingService;
+use widewebpro\aiassistant\services\KnowledgeBaseService;
+use widewebpro\aiassistant\services\ProviderService;
+use widewebpro\aiassistant\services\ToolRegistry;
+use widewebpro\aiassistant\services\WebhookService;
+use widewebpro\aiassistant\services\WidgetService;
 use yii\base\Event;
 
 /**
@@ -36,7 +36,7 @@ use yii\base\Event;
  */
 class Plugin extends BasePlugin
 {
-    public string $schemaVersion = '1.4.0';
+    public string $schemaVersion = '1.0.0';
     public bool $hasCpSection = true;
     public bool $hasCpSettings = true;
 
@@ -71,14 +71,14 @@ class Plugin extends BasePlugin
         $user = Craft::$app->getUser();
 
         $subnav = [];
-        if ($user->checkPermission('aiAgent:viewConversations')) {
-            $subnav['dashboard'] = ['label' => 'Dashboard', 'url' => 'ai-agent'];
-            $subnav['conversations'] = ['label' => 'Conversations', 'url' => 'ai-agent/conversations'];
+        if ($user->checkPermission('aiAssistant:viewConversations')) {
+            $subnav['dashboard'] = ['label' => 'Dashboard', 'url' => 'craft-ai-assistant'];
+            $subnav['conversations'] = ['label' => 'Conversations', 'url' => 'craft-ai-assistant/conversations'];
         }
-        if ($user->checkPermission('aiAgent:manageSettings')) {
-            $subnav['settings'] = ['label' => 'Settings', 'url' => 'ai-agent/settings'];
-        } elseif ($user->checkPermission('aiAgent:manageKnowledgeBase')) {
-            $subnav['settings'] = ['label' => 'Settings', 'url' => 'ai-agent/settings/knowledge-base'];
+        if ($user->checkPermission('aiAssistant:manageSettings')) {
+            $subnav['settings'] = ['label' => 'Settings', 'url' => 'craft-ai-assistant/settings'];
+        } elseif ($user->checkPermission('aiAssistant:manageKnowledgeBase')) {
+            $subnav['settings'] = ['label' => 'Settings', 'url' => 'craft-ai-assistant/settings/knowledge-base'];
         }
 
         if (empty($subnav)) {
@@ -101,7 +101,7 @@ class Plugin extends BasePlugin
     protected function settingsHtml(): ?string
     {
         return Craft::$app->getView()->renderTemplate(
-            'ai-agent/settings/settings',
+            'craft-ai-assistant/settings/settings',
             ['settings' => $this->getSettings()],
             View::TEMPLATE_MODE_CP
         );
@@ -130,25 +130,25 @@ class Plugin extends BasePlugin
             UrlManager::EVENT_REGISTER_CP_URL_RULES,
             function (RegisterUrlRulesEvent $event) {
                 // Main nav
-                $event->rules['ai-agent'] = 'ai-agent/default/index';
-                $event->rules['ai-agent/conversations'] = 'ai-agent/conversations/index';
-                $event->rules['ai-agent/conversations/<conversationId:\d+>'] = 'ai-agent/conversations/view';
+                $event->rules['craft-ai-assistant'] = 'craft-ai-assistant/default/index';
+                $event->rules['craft-ai-assistant/conversations'] = 'craft-ai-assistant/conversations/index';
+                $event->rules['craft-ai-assistant/conversations/<conversationId:\d+>'] = 'craft-ai-assistant/conversations/view';
 
                 // Settings sub-tabs
-                $event->rules['ai-agent/settings'] = 'ai-agent/settings/index';
-                $event->rules['ai-agent/settings/save'] = 'ai-agent/settings/save';
-                $event->rules['ai-agent/settings/appearance'] = 'ai-agent/appearance/index';
-                $event->rules['ai-agent/settings/appearance/save'] = 'ai-agent/appearance/save';
-                $event->rules['ai-agent/settings/knowledge-base'] = 'ai-agent/knowledge-base/index';
-                $event->rules['ai-agent/settings/knowledge-base/upload'] = 'ai-agent/knowledge-base/upload';
-                $event->rules['ai-agent/settings/knowledge-base/delete/<fileId:\d+>'] = 'ai-agent/knowledge-base/delete';
-                $event->rules['ai-agent/settings/knowledge-base/reprocess/<fileId:\d+>'] = 'ai-agent/knowledge-base/reprocess';
-                $event->rules['ai-agent/settings/pages'] = 'ai-agent/pages/index';
-                $event->rules['ai-agent/settings/pages/save'] = 'ai-agent/pages/save';
-                $event->rules['ai-agent/settings/restrictions'] = 'ai-agent/restrictions/index';
-                $event->rules['ai-agent/settings/restrictions/save'] = 'ai-agent/restrictions/save';
-                $event->rules['ai-agent/settings/escalation'] = 'ai-agent/escalation/index';
-                $event->rules['ai-agent/settings/escalation/save'] = 'ai-agent/escalation/save';
+                $event->rules['craft-ai-assistant/settings'] = 'craft-ai-assistant/settings/index';
+                $event->rules['craft-ai-assistant/settings/save'] = 'craft-ai-assistant/settings/save';
+                $event->rules['craft-ai-assistant/settings/appearance'] = 'craft-ai-assistant/appearance/index';
+                $event->rules['craft-ai-assistant/settings/appearance/save'] = 'craft-ai-assistant/appearance/save';
+                $event->rules['craft-ai-assistant/settings/knowledge-base'] = 'craft-ai-assistant/knowledge-base/index';
+                $event->rules['craft-ai-assistant/settings/knowledge-base/upload'] = 'craft-ai-assistant/knowledge-base/upload';
+                $event->rules['craft-ai-assistant/settings/knowledge-base/delete/<fileId:\d+>'] = 'craft-ai-assistant/knowledge-base/delete';
+                $event->rules['craft-ai-assistant/settings/knowledge-base/reprocess/<fileId:\d+>'] = 'craft-ai-assistant/knowledge-base/reprocess';
+                $event->rules['craft-ai-assistant/settings/pages'] = 'craft-ai-assistant/pages/index';
+                $event->rules['craft-ai-assistant/settings/pages/save'] = 'craft-ai-assistant/pages/save';
+                $event->rules['craft-ai-assistant/settings/restrictions'] = 'craft-ai-assistant/restrictions/index';
+                $event->rules['craft-ai-assistant/settings/restrictions/save'] = 'craft-ai-assistant/restrictions/save';
+                $event->rules['craft-ai-assistant/settings/escalation'] = 'craft-ai-assistant/escalation/index';
+                $event->rules['craft-ai-assistant/settings/escalation/save'] = 'craft-ai-assistant/escalation/save';
             }
         );
     }
@@ -162,13 +162,13 @@ class Plugin extends BasePlugin
                 $event->permissions[] = [
                     'heading' => 'AI Assistant',
                     'permissions' => [
-                        'aiAgent:viewConversations' => [
+                        'aiAssistant:viewConversations' => [
                             'label' => 'View dashboard and conversations',
                         ],
-                        'aiAgent:manageKnowledgeBase' => [
+                        'aiAssistant:manageKnowledgeBase' => [
                             'label' => 'Manage the knowledge base',
                         ],
-                        'aiAgent:manageSettings' => [
+                        'aiAssistant:manageSettings' => [
                             'label' => 'Manage settings',
                             'warning' => 'Grants access to the AI provider API key.',
                         ],
@@ -184,11 +184,11 @@ class Plugin extends BasePlugin
             UrlManager::class,
             UrlManager::EVENT_REGISTER_SITE_URL_RULES,
             function (RegisterUrlRulesEvent $event) {
-                $event->rules['ai-agent/chat'] = 'ai-agent/chat-api/send';
-                $event->rules['ai-agent/chat/stream'] = 'ai-agent/chat-api/stream';
-                $event->rules['ai-agent/widget-config'] = 'ai-agent/chat-api/widget-config';
-                $event->rules['ai-agent/escalate'] = 'ai-agent/chat-api/escalate';
-                $event->rules['ai-agent/avatar'] = 'ai-agent/chat-api/avatar';
+                $event->rules['craft-ai-assistant/chat'] = 'craft-ai-assistant/chat-api/send';
+                $event->rules['craft-ai-assistant/chat/stream'] = 'craft-ai-assistant/chat-api/stream';
+                $event->rules['craft-ai-assistant/widget-config'] = 'craft-ai-assistant/chat-api/widget-config';
+                $event->rules['craft-ai-assistant/escalate'] = 'craft-ai-assistant/chat-api/escalate';
+                $event->rules['craft-ai-assistant/avatar'] = 'craft-ai-assistant/chat-api/avatar';
             }
         );
     }

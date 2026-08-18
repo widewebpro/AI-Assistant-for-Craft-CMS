@@ -1,11 +1,11 @@
-{% extends "ai-agent/settings/_layout" %}
+{% extends "craft-ai-assistant/settings/_layout" %}
 {% set title = "Settings" %}
 {% set settingsTab = "pages" %}
 {% set fullPageForm = true %}
 
 {% block content %}
-    {{ actionInput('ai-agent/pages/save') }}
-    {{ redirectInput('ai-agent/settings/pages') }}
+    {{ actionInput('craft-ai-assistant/pages/save') }}
+    {{ redirectInput('craft-ai-assistant/settings/pages') }}
 
     {{ parent() }}
 {% endblock %}

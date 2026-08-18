@@ -1,12 +1,12 @@
-{% extends "ai-agent/settings/_layout" %}
+{% extends "craft-ai-assistant/settings/_layout" %}
 {% import "_includes/forms" as forms %}
 {% set title = "Settings" %}
 {% set settingsTab = "restrictions" %}
 {% set fullPageForm = true %}
 
 {% block content %}
-    {{ actionInput('ai-agent/restrictions/save') }}
-    {{ redirectInput('ai-agent/settings/restrictions') }}
+    {{ actionInput('craft-ai-assistant/restrictions/save') }}
+    {{ redirectInput('craft-ai-assistant/settings/restrictions') }}
 
     {{ parent() }}
 {% endblock %}

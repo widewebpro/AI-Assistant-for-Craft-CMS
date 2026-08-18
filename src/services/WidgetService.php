@@ -1,10 +1,10 @@
 <?php
 
-namespace widewebpro\aiagent\services;
+namespace widewebpro\aiassistant\services;
 
 use Craft;
 use craft\base\Component;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 
 class WidgetService extends Component
 {
@@ -32,24 +32,24 @@ class WidgetService extends Component
             'customCss' => $settings->customCss,
             'customJs' => $settings->customJs,
             'endpoints' => [
-                'chat' => rtrim($siteUrl, '/') . '/ai-agent/chat',
-                'stream' => rtrim($siteUrl, '/') . '/ai-agent/chat/stream',
+                'chat' => rtrim($siteUrl, '/') . '/craft-ai-assistant/chat',
+                'stream' => rtrim($siteUrl, '/') . '/craft-ai-assistant/chat/stream',
             ],
             'strings' => [
-                'widgetAria' => Craft::t('ai-agent', '{name} Chat', ['name' => $settings->agentName]),
-                'openChat' => Craft::t('ai-agent', 'Open chat'),
-                'closeChat' => Craft::t('ai-agent', 'Close chat'),
-                'messageAria' => Craft::t('ai-agent', 'Message'),
-                'sendMessage' => Craft::t('ai-agent', 'Send message'),
-                'online' => Craft::t('ai-agent', 'Online'),
-                'searching' => Craft::t('ai-agent', 'Searching: {tool}…'),
-                'errorGeneric' => Craft::t('ai-agent', 'An error occurred.'),
-                'connectionLost' => Craft::t('ai-agent', 'Connection lost. Please try again.'),
-                'unavailable' => Craft::t('ai-agent', 'The assistant is temporarily unavailable. Please try again later.'),
-                'contactInformation' => Craft::t('ai-agent', 'Contact Information'),
-                'submit' => Craft::t('ai-agent', 'Submit'),
-                'submitting' => Craft::t('ai-agent', 'Submitting…'),
-                'formError' => Craft::t('ai-agent', 'Sorry, there was an error submitting the form. Please try again.'),
+                'widgetAria' => Craft::t('craft-ai-assistant', '{name} Chat', ['name' => $settings->agentName]),
+                'openChat' => Craft::t('craft-ai-assistant', 'Open chat'),
+                'closeChat' => Craft::t('craft-ai-assistant', 'Close chat'),
+                'messageAria' => Craft::t('craft-ai-assistant', 'Message'),
+                'sendMessage' => Craft::t('craft-ai-assistant', 'Send message'),
+                'online' => Craft::t('craft-ai-assistant', 'Online'),
+                'searching' => Craft::t('craft-ai-assistant', 'Searching: {tool}…'),
+                'errorGeneric' => Craft::t('craft-ai-assistant', 'An error occurred.'),
+                'connectionLost' => Craft::t('craft-ai-assistant', 'Connection lost. Please try again.'),
+                'unavailable' => Craft::t('craft-ai-assistant', 'The assistant is temporarily unavailable. Please try again later.'),
+                'contactInformation' => Craft::t('craft-ai-assistant', 'Contact Information'),
+                'submit' => Craft::t('craft-ai-assistant', 'Submit'),
+                'submitting' => Craft::t('craft-ai-assistant', 'Submitting…'),
+                'formError' => Craft::t('craft-ai-assistant', 'Sorry, there was an error submitting the form. Please try again.'),
             ],
             'escalation' => [
                 'enabled' => $settings->escalationEnabled,
@@ -99,7 +99,7 @@ class WidgetService extends Component
 
         return <<<HTML
 <script>
-window.__aiAgentConfig = {$configJson};
+window.__aiAssistantConfig = {$configJson};
 </script>
 <script src="{$widgetJsUrl}" defer></script>
 HTML;

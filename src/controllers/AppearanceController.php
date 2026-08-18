@@ -1,11 +1,11 @@
 <?php
 
-namespace widewebpro\aiagent\controllers;
+namespace widewebpro\aiassistant\controllers;
 
 use Craft;
 use craft\helpers\FileHelper;
 use craft\web\Controller;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 use yii\web\Response;
 use yii\web\UploadedFile;
 
@@ -17,7 +17,7 @@ class AppearanceController extends Controller
             return false;
         }
 
-        $this->requirePermission('aiAgent:manageSettings');
+        $this->requirePermission('aiAssistant:manageSettings');
         return true;
     }
 
@@ -25,7 +25,7 @@ class AppearanceController extends Controller
     {
         $result = Craft::$app->getAssetManager()->publish(dirname(__DIR__) . '/web/assets/widget');
 
-        return $this->renderTemplate('ai-agent/settings/appearance', [
+        return $this->renderTemplate('craft-ai-assistant/settings/appearance', [
             'plugin' => Plugin::getInstance(),
             'settings' => Plugin::getInstance()->getSettings(),
             'widgetJsUrl' => $result[1] . '/chat-widget.js',
@@ -72,16 +72,16 @@ class AppearanceController extends Controller
             $realMime = $avatarFile->tempName ? FileHelper::getMimeType($avatarFile->tempName) : null;
             if (!isset($allowed[$ext]) || $realMime !== $allowed[$ext]) {
                 Craft::$app->getSession()->setError('Avatar must be a PNG, JPG, GIF or WebP image.');
-                return $this->redirect('ai-agent/settings/appearance');
+                return $this->redirect('craft-ai-assistant/settings/appearance');
             }
             $this->_deleteAvatarFile();
-            $storagePath = Craft::$app->getPath()->getStoragePath() . '/ai-agent';
+            $storagePath = Craft::$app->getPath()->getStoragePath() . '/craft-ai-assistant';
             if (!is_dir($storagePath)) {
                 mkdir($storagePath, 0775, true);
             }
             $avatarFile->saveAs($storagePath . '/avatar.' . $ext);
             $siteUrl = rtrim(Craft::$app->getSites()->getCurrentSite()->getBaseUrl(), '/');
-            $settings->avatarUrl = $siteUrl . '/ai-agent/avatar';
+            $settings->avatarUrl = $siteUrl . '/craft-ai-assistant/avatar';
         } elseif (!$removeAvatar) {
             $manualUrl = trim($request->getBodyParam('avatarUrl', ''));
             if ($manualUrl !== '' && $manualUrl !== $settings->avatarUrl) {
@@ -96,12 +96,12 @@ class AppearanceController extends Controller
         }
 
         Craft::$app->getSession()->setNotice('Appearance settings saved.');
-        return $this->redirect('ai-agent/settings/appearance');
+        return $this->redirect('craft-ai-assistant/settings/appearance');
     }
 
     private function _deleteAvatarFile(): void
     {
-        $storagePath = Craft::$app->getPath()->getStoragePath() . '/ai-agent';
+        $storagePath = Craft::$app->getPath()->getStoragePath() . '/craft-ai-assistant';
         $files = glob($storagePath . '/avatar.*');
         foreach ($files as $f) {
             if (is_file($f)) {

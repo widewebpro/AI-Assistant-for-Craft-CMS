@@ -1,9 +1,9 @@
 (function () {
   'use strict';
 
-  window.__aiAgentBuildStyles = buildStyles;
+  window.__aiAssistantBuildStyles = buildStyles;
 
-  var config = window.__aiAgentConfig;
+  var config = window.__aiAssistantConfig;
   if (!config || !config.enabled) return;
 
   function t(key, fallback) {
@@ -18,7 +18,7 @@
 
   // Create host element
   var host = document.createElement('div');
-  host.id = 'ai-agent-widget';
+  host.id = 'craft-ai-assistant-widget';
   document.body.appendChild(host);
 
   var shadow = host.attachShadow({ mode: 'open' });
@@ -450,8 +450,8 @@
       submitBtn.disabled = true;
       submitBtn.textContent = t('submitting', 'Submitting...');
 
-      var siteUrl = config.endpoints.stream.replace('/ai-agent/chat/stream', '');
-      fetch(siteUrl + '/ai-agent/escalate', {
+      var siteUrl = config.endpoints.stream.replace('/craft-ai-assistant/chat/stream', '');
+      fetch(siteUrl + '/craft-ai-assistant/escalate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({ sessionId: sessionId, contact: contactData }),
@@ -547,7 +547,7 @@
   }
 
   function getSessionId() {
-    var key = 'ai_agent_session';
+    var key = 'ai_assistant_session';
     var id = localStorage.getItem(key);
     if (!id) {
       id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -561,7 +561,7 @@
 
   function loadMessages() {
     try {
-      var stored = localStorage.getItem('ai_agent_messages_' + sessionId);
+      var stored = localStorage.getItem('ai_assistant_messages_' + sessionId);
       return stored ? JSON.parse(stored) : [];
     } catch (e) {
       return [];
@@ -571,7 +571,7 @@
   function saveMessages() {
     try {
       var toSave = messages.slice(-50);
-      localStorage.setItem('ai_agent_messages_' + sessionId, JSON.stringify(toSave));
+      localStorage.setItem('ai_assistant_messages_' + sessionId, JSON.stringify(toSave));
     } catch (e) { /* quota exceeded */ }
   }
 

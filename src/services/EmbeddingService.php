@@ -1,11 +1,11 @@
 <?php
 
-namespace widewebpro\aiagent\services;
+namespace widewebpro\aiassistant\services;
 
 use Craft;
 use craft\base\Component;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\KnowledgeChunkRecord;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\KnowledgeChunkRecord;
 
 class EmbeddingService extends Component
 {
@@ -40,7 +40,7 @@ class EmbeddingService extends Component
                 $embeddingBinary = pack('f*', ...$this->_normalize($embeddings[$i]));
 
                 Craft::$app->getDb()->createCommand()
-                    ->insert('{{%aiagent_embeddings}}', [
+                    ->insert('{{%aiassistant_embeddings}}', [
                         'chunkId' => $chunk->id,
                         'embedding' => $embeddingBinary,
                         'model' => $settings->embeddingModel,
@@ -60,14 +60,14 @@ class EmbeddingService extends Component
         try {
             $vectorResults = $this->_embeddingSearch($query, $pool);
         } catch (\Throwable $e) {
-            Craft::warning("Embedding search failed, using keyword candidates only: " . $e->getMessage(), 'ai-agent');
+            Craft::warning("Embedding search failed, using keyword candidates only: " . $e->getMessage(), 'craft-ai-assistant');
         }
 
         $keywordResults = [];
         try {
             $keywordResults = $this->_keywordSearch($query, $pool);
         } catch (\Throwable $e) {
-            Craft::warning("Keyword search failed: " . $e->getMessage(), 'ai-agent');
+            Craft::warning("Keyword search failed: " . $e->getMessage(), 'craft-ai-assistant');
         }
 
         $candidates = $this->_rrfMerge($vectorResults ?? [], $keywordResults, $pool);
@@ -129,7 +129,7 @@ class EmbeddingService extends Component
 
         $rows = (new \yii\db\Query())
             ->select(['chunkId', 'embedding'])
-            ->from('{{%aiagent_embeddings}}')
+            ->from('{{%aiassistant_embeddings}}')
             ->where(['chunkId' => $chunkIds, 'model' => Plugin::getInstance()->getSettings()->embeddingModel])
             ->all();
 
@@ -189,9 +189,9 @@ class EmbeddingService extends Component
         do {
             $rows = (new \yii\db\Query())
                 ->select(['e.chunkId', 'e.embedding', 'c.content', 'c.fileId', 'c.metadata', 'f.originalName as filename'])
-                ->from('{{%aiagent_embeddings}} e')
-                ->innerJoin('{{%aiagent_knowledge_chunks}} c', 'c.id = e.chunkId')
-                ->innerJoin('{{%aiagent_knowledge_files}} f', 'f.id = c.fileId')
+                ->from('{{%aiassistant_embeddings}} e')
+                ->innerJoin('{{%aiassistant_knowledge_chunks}} c', 'c.id = e.chunkId')
+                ->innerJoin('{{%aiassistant_knowledge_files}} f', 'f.id = c.fileId')
                 ->where(['f.status' => 'ready', 'e.model' => $settings->embeddingModel])
                 ->andWhere(['>', 'e.chunkId', $lastChunkId])
                 ->orderBy(['e.chunkId' => SORT_ASC])
@@ -236,8 +236,8 @@ class EmbeddingService extends Component
                 'c.id as chunkId',
                 'MATCH(c.content) AGAINST(:query IN NATURAL LANGUAGE MODE) as score',
             ])
-            ->from('{{%aiagent_knowledge_chunks}} c')
-            ->innerJoin('{{%aiagent_knowledge_files}} f', 'f.id = c.fileId')
+            ->from('{{%aiassistant_knowledge_chunks}} c')
+            ->innerJoin('{{%aiassistant_knowledge_files}} f', 'f.id = c.fileId')
             ->where(['f.status' => 'ready'])
             ->andWhere('MATCH(c.content) AGAINST(:query IN NATURAL LANGUAGE MODE)', [':query' => $query])
             ->orderBy(['score' => SORT_DESC])

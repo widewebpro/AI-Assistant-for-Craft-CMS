@@ -1,8 +1,8 @@
 <?php
 
-namespace widewebpro\aiagent\events;
+namespace widewebpro\aiassistant\events;
 
-use widewebpro\aiagent\tools\BaseTool;
+use widewebpro\aiassistant\tools\BaseTool;
 use yii\base\Event;
 
 class RegisterToolsEvent extends Event

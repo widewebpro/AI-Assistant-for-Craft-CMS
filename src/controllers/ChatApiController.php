@@ -1,10 +1,10 @@
 <?php
 
-namespace widewebpro\aiagent\controllers;
+namespace widewebpro\aiassistant\controllers;
 
 use Craft;
 use craft\web\Controller;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 use yii\web\BadRequestHttpException;
 use yii\web\Response;
 
@@ -14,7 +14,7 @@ class ChatApiController extends Controller
     public $enableCsrfValidation = false;
 
     /**
-     * POST /ai-agent/chat — Non-streaming chat endpoint.
+     * POST /craft-ai-assistant/chat — Non-streaming chat endpoint.
      */
     public function actionSend(): Response
     {
@@ -94,7 +94,7 @@ class ChatApiController extends Controller
                 'status' => $wasEscalated ? 'escalated' : 'ok',
             ]);
         } catch (\Throwable $e) {
-            Craft::error('AI Agent error: ' . $e->getMessage(), 'ai-agent');
+            Craft::error('AI Agent error: ' . $e->getMessage(), 'craft-ai-assistant');
 
             return $this->asJson([
                 'text' => $settings->errorMessage,
@@ -105,7 +105,7 @@ class ChatApiController extends Controller
     }
 
     /**
-     * GET /ai-agent/chat/stream — SSE streaming endpoint.
+     * GET /craft-ai-assistant/chat/stream — SSE streaming endpoint.
      */
     public function actionStream(): void
     {
@@ -223,7 +223,7 @@ class ChatApiController extends Controller
 
             $this->_sendSSE('done', ['messageId' => $assistantMsg->id]);
         } catch (\Throwable $e) {
-            Craft::error('AI Agent stream error: ' . $e->getMessage(), 'ai-agent');
+            Craft::error('AI Agent stream error: ' . $e->getMessage(), 'craft-ai-assistant');
             $this->_sendSSE('error', ['message' => $settings->errorMessage]);
             $this->_sendSSE('done', []);
         }
@@ -232,7 +232,7 @@ class ChatApiController extends Controller
     }
 
     /**
-     * GET /ai-agent/widget-config — Widget configuration for headless front ends.
+     * GET /craft-ai-assistant/widget-config — Widget configuration for headless front ends.
      */
     public function actionWidgetConfig(): Response
     {
@@ -278,7 +278,7 @@ class ChatApiController extends Controller
     }
 
     /**
-     * POST /ai-agent/escalate — Save escalation contact form data.
+     * POST /craft-ai-assistant/escalate — Save escalation contact form data.
      */
     public function actionEscalate(): Response
     {
@@ -294,7 +294,7 @@ class ChatApiController extends Controller
             return $this->asJson(['error' => 'Session ID required.', 'status' => 'error']);
         }
 
-        $conversation = \widewebpro\aiagent\records\ConversationRecord::find()
+        $conversation = \widewebpro\aiassistant\records\ConversationRecord::find()
             ->where(['sessionId' => $sessionId])
             ->one();
 
@@ -315,7 +315,7 @@ class ChatApiController extends Controller
         $plugin->chat->addMessage($conversation->id, 'system', 'Escalation form submitted: ' . json_encode($contactData));
 
         if ($plugin->webhook->hasEnabledActions()) {
-            Craft::$app->getQueue()->push(new \widewebpro\aiagent\jobs\FireEscalationWebhooksJob([
+            Craft::$app->getQueue()->push(new \widewebpro\aiassistant\jobs\FireEscalationWebhooksJob([
                 'conversationId' => $conversation->id,
                 'contactData' => $contactData,
                 'conversationMeta' => [
@@ -328,7 +328,7 @@ class ChatApiController extends Controller
             ]));
         }
 
-        Craft::info("Escalation form submitted for conversation {$conversation->id}", 'ai-agent');
+        Craft::info("Escalation form submitted for conversation {$conversation->id}", 'craft-ai-assistant');
 
         return $this->asJson([
             'status' => 'ok',
@@ -376,11 +376,11 @@ class ChatApiController extends Controller
     }
 
     /**
-     * GET /ai-agent/avatar — Serve the uploaded avatar image.
+     * GET /craft-ai-assistant/avatar — Serve the uploaded avatar image.
      */
     public function actionAvatar(): Response
     {
-        $storagePath = Craft::$app->getPath()->getStoragePath() . '/ai-agent';
+        $storagePath = Craft::$app->getPath()->getStoragePath() . '/craft-ai-assistant';
         $files = glob($storagePath . '/avatar.*');
 
         if (empty($files) || !file_exists($files[0])) {

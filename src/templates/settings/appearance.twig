@@ -1,4 +1,4 @@
-{% extends "ai-agent/settings/_layout" %}
+{% extends "craft-ai-assistant/settings/_layout" %}
 {% import "_includes/forms" as forms %}
 {% set title = "Settings" %}
 {% set settingsTab = "appearance" %}
@@ -10,8 +10,8 @@
 {% endif %}
 
 {% block content %}
-    {{ actionInput('ai-agent/appearance/save') }}
-    {{ redirectInput('ai-agent/settings/appearance') }}
+    {{ actionInput('craft-ai-assistant/appearance/save') }}
+    {{ redirectInput('craft-ai-assistant/settings/appearance') }}
 
     {{ parent() }}
 {% endblock %}
@@ -186,7 +186,7 @@
 (function() {
     var host = document.getElementById('widget-preview');
     if (!host) return;
-    if (!window.__aiAgentBuildStyles) {
+    if (!window.__aiAssistantBuildStyles) {
         host.textContent = 'Preview unavailable (widget script failed to load).';
         return;
     }
@@ -248,7 +248,7 @@
     }
 
     function updatePreview() {
-        themeStyle.textContent = window.__aiAgentBuildStyles({
+        themeStyle.textContent = window.__aiAssistantBuildStyles({
             primaryColor: val('primaryColor'),
             secondaryColor: val('secondaryColor'),
             backgroundColor: val('backgroundColor'),

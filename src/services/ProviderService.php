@@ -1,11 +1,11 @@
 <?php
 
-namespace widewebpro\aiagent\services;
+namespace widewebpro\aiassistant\services;
 
 use Craft;
 use craft\base\Component;
 use craft\helpers\App;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 

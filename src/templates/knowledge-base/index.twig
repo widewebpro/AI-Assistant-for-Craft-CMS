@@ -9,8 +9,8 @@
 
     <form method="post" enctype="multipart/form-data" accept-charset="UTF-8" id="kb-upload-form">
         {{ csrfInput() }}
-        {{ actionInput('ai-agent/knowledge-base/upload') }}
-        {{ redirectInput('ai-agent/knowledge-base') }}
+        {{ actionInput('craft-ai-assistant/knowledge-base/upload') }}
+        {{ redirectInput('craft-ai-assistant/knowledge-base') }}
 
         <div id="kb-dropzone" style="
             border: 2px dashed #d1d5db;
@@ -40,7 +40,7 @@
 
 <div class="pane">
     <h2>Knowledge Base Files</h2>
-    {% set files = craft.app.db.createCommand("SELECT * FROM {{%aiagent_knowledge_files}} ORDER BY dateCreated DESC").queryAll() %}
+    {% set files = craft.app.db.createCommand("SELECT * FROM {{%aiassistant_knowledge_files}} ORDER BY dateCreated DESC").queryAll() %}
 
     {% if files | length %}
     <table class="data fullwidth">
@@ -70,15 +70,15 @@
                 <td>
                     <form method="post" style="display: inline;">
                         {{ csrfInput() }}
-                        {{ actionInput('ai-agent/knowledge-base/reprocess') }}
-                        {{ redirectInput('ai-agent/knowledge-base') }}
+                        {{ actionInput('craft-ai-assistant/knowledge-base/reprocess') }}
+                        {{ redirectInput('craft-ai-assistant/knowledge-base') }}
                         <input type="hidden" name="fileId" value="{{ file.id }}">
                         <button type="submit" class="btn small">Reprocess</button>
                     </form>
                     <form method="post" style="display: inline;" onsubmit="return confirm('Delete this file and all its chunks?')">
                         {{ csrfInput() }}
-                        {{ actionInput('ai-agent/knowledge-base/delete') }}
-                        {{ redirectInput('ai-agent/knowledge-base') }}
+                        {{ actionInput('craft-ai-assistant/knowledge-base/delete') }}
+                        {{ redirectInput('craft-ai-assistant/knowledge-base') }}
                         <input type="hidden" name="fileId" value="{{ file.id }}">
                         <button type="submit" class="btn small" style="color: #dc2626;">Delete</button>
                     </form>

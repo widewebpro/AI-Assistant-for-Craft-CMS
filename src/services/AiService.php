@@ -1,10 +1,10 @@
 <?php
 
-namespace widewebpro\aiagent\services;
+namespace widewebpro\aiassistant\services;
 
 use Craft;
 use craft\base\Component;
-use widewebpro\aiagent\Plugin;
+use widewebpro\aiassistant\Plugin;
 
 class AiService extends Component
 {
@@ -499,7 +499,7 @@ class AiService extends Component
                 'temperature' => 0,
             ]);
         } catch (\Throwable $e) {
-            Craft::error('Scope check failed, allowing the message through: ' . $e->getMessage(), 'ai-agent');
+            Craft::error('Scope check failed, allowing the message through: ' . $e->getMessage(), 'craft-ai-assistant');
             return true;
         }
 
@@ -510,7 +510,7 @@ class AiService extends Component
         }
 
         if (!str_contains($verdict, 'IN_SCOPE')) {
-            Craft::warning("Scope check returned an unusable verdict, allowing through: {$verdict}", 'ai-agent');
+            Craft::warning("Scope check returned an unusable verdict, allowing through: {$verdict}", 'craft-ai-assistant');
         }
 
         return true;
@@ -572,7 +572,7 @@ class AiService extends Component
         }
 
         // Inject available KB files
-        $kbFiles = \widewebpro\aiagent\records\KnowledgeFileRecord::find()
+        $kbFiles = \widewebpro\aiassistant\records\KnowledgeFileRecord::find()
             ->where(['status' => 'ready'])
             ->all();
 

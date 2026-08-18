@@ -1,12 +1,12 @@
 <?php
 
-namespace widewebpro\aiagent\console\controllers;
+namespace widewebpro\aiassistant\console\controllers;
 
 use Craft;
 use craft\console\Controller;
 use craft\helpers\Console;
-use widewebpro\aiagent\Plugin;
-use widewebpro\aiagent\records\KnowledgeFileRecord;
+use widewebpro\aiassistant\Plugin;
+use widewebpro\aiassistant\records\KnowledgeFileRecord;
 use yii\console\ExitCode;
 
 /**
